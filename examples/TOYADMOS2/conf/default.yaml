@@ -1,0 +1,23 @@
+expname: "test"
+
+temp:
+  target_dir: "/haoyu/data/ToyADMOS2_clean"
+  task: "ToyTrain" # "ToyTrain" "ToyCar"
+
+datamodule:
+  datasets:
+    train:
+      select: "TOYADMOS2_DATASET"
+      conf:
+        path: ${temp.target_dir}/${temp.task}/train
+    dev:
+      select: "TOYADMOS2_DATASET"
+      conf:
+        path: ${temp.target_dir}/${temp.task}/source_test
+    test: 
+      conf:
+        select: "TOYADMOS2_DATASET"
+        path: ${temp.target_dir}/${temp.task}/target_test
+
+trainer:
+  gpus: "0"
