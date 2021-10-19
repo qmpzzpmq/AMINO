@@ -24,14 +24,14 @@ class OPTIM(ABC):
     contiguous_params: bool = False
     conf: Any = field(default_factory=dict)
 
-
 @type_checked_constructor()
 @dataclass
-class MODULE(ABC):
-    loss: AMINO_CONF(select="torch.nn.MSELoss", conf={"reduction": "sum"})
-    optim: OPTIM(
+class MODULE_CONF(ABC):
+    loss: AMINO_CONF = AMINO_CONF(select="torch.nn.MSELoss", conf={"reduction": "sum"})
+    optim: OPTIM = OPTIM(
         select="torch.optim.Adam", contiguous_params=True, conf={"lr": "0.001"}
     )
-    scheduler: AMINO_CONF(
+    scheduler: AMINO_CONF = AMINO_CONF(
         select="lambdalr", conf={"last_epoch": -1, "lr_lambda":'lambda epoch: 0.95 ** epoch'}
     )
+    net: AMINO_CONF = AMINO_CONF(select="simple_autoencoder")

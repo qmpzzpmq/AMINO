@@ -5,17 +5,13 @@ import hydra
 from omegaconf import OmegaConf
 
 import pytorch_lightning as pl
-import torch
-import torch.utils.data as tdata
 
 from AMINO.configs.configs import TRAIN_CONFIG
 from AMINO.data.datamodule import init_datamodule
 from AMINO.utils.callbacks import init_callbacks
 from AMINO.utils.loggers import init_loggers
+from AMINO.modules.modules import init_module
 
-#debug
-from AMINO.configs.datamodule import PREPORCESSES
-from AMINO.configs.common import AMINO_CONF
 
 @hydra.main(
     config_path=os.path.join(os.getcwd(), 'conf'),
@@ -32,14 +28,15 @@ def main(read_cfg) -> None:
     callbacks = init_callbacks(cfg['callbacks'])
     loggers = init_loggers(cfg['loggers'])
     dm = init_datamodule(cfg['datamodule'])
-    # raaec = RAAEC(cfg['module'], cfg['optim'], cfg['loss'])
+    module = init_module(cfg['module'])
     
-    # trainer = pl.Trainer(
-    #     callbacks=callbacks,
-    #     logger=loggers,
-    #     **cfg['trainer'],
-    # )
-    # trainer.fit(raaec, datamodule=dm)
+    trainer = pl.Trainer(
+        callbacks=callbacks,
+        logger=loggers,
+        **cfg['trainer'],
+    )
+    trainer.fit(module, datamodule=dm)
+    logging.warning("done")
 
 
 if __name__ == "__main__":

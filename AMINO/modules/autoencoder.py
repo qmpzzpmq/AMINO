@@ -1,15 +1,15 @@
 import torch.nn as nn
 import pytorch_lightning as pl
 
-from AMINO.module.nets import init_nets
-from AMINO.module.loss import init_loss
-from AMINO.module.optim import init_optim
-from AMINO.module.scheduler import init_scheduler
+from AMINO.modules.nets.nets import init_net
+from AMINO.modules.loss import init_loss
+from AMINO.modules.optim import init_optim
+from AMINO.modules.scheduler import init_scheduler
 
 class AMINO_AUTOENCODER(pl.LightningModule):
     def __init__(self, net_conf, loss_conf, optim_conf):
         super().__init__()
-        self.net = init_nets(net_conf)
+        self.net = init_net(net_conf)
         self.loss = init_loss(loss_conf)
         if optim_conf is not None:
             self.optim = init_optim(self.raaec, optim_conf['optim'])
