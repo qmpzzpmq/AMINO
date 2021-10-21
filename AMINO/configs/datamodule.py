@@ -17,47 +17,47 @@ class DATALOADER(ABC):
 @dataclass
 class DATALOADERS(ABC):
     train: DATALOADER = field(default_factory=DATALOADER)
-    dev: Union[DATALOADER, None] = field(default_factory=None)
-    test: Union[DATALOADER, None]  = field(default_factory=None)
-@type_checked_constructor()
-@dataclass
-class DATASET_CONF(ABC):
-    path: str 
-    mono: str = "mean" #could be "mean" "0" "1"
-    fs: int = 16000
+    val: DATALOADER = field(default_factory=DATALOADER)
+    test: DATALOADER = field(default_factory=DATALOADER)
 
 @type_checked_constructor()
 @dataclass
 class DATASETS(ABC):
     train: AMINO_CONF = AMINO_CONF(select="TOYADMOS2_DATASET")
-    dev: Union[AMINO_CONF, None] = field(default_factory=None)
+    val: Union[AMINO_CONF, None] = field(default_factory=None)
     test: Union[AMINO_CONF, None] = field(default_factory=None)
 
 @type_checked_constructor()
 @dataclass
-class PREPORCESSES(ABC):
-    train: List = field(default_factory=
-        lambda: [
-            AMINO_CONF(select="AUDIO_GENERAL", conf={"fs":16000, "mono_channel": 'mean'}),
-            AMINO_CONF(select="FFT"),
-        ]
-    )
-    dev: AMINO_CONF = field(default_factory=
-        lambda: [
-            AMINO_CONF(select="AUDIO_GENERAL", conf={"fs":16000, "mono_channel": 'mean'}),
-            AMINO_CONF(select="FFT"),
-        ]
-    )
-    test: AMINO_CONF = field(default_factory=
-        lambda: [
-            AMINO_CONF(select="AUDIO_GENERAL", conf={"fs":16000, "mono_channel": 'mean'}),
-            AMINO_CONF(select="FFT"),
-        ]
-    )
+class TRANSFORMS(ABC):
+    train: Union[List[AMINO_CONF], None] = field(default_factory=None)
+    val: Union[List[AMINO_CONF], None] = field(default_factory=None)
+    test: Union[List[AMINO_CONF], None] = field(default_factory=None)
 
 @type_checked_constructor()
 @dataclass
 class DATAMODULE(ABC):
-    preprocess: PREPORCESSES = field(default_factory=PREPORCESSES)
     datasets: DATASETS = field(default_factory=DATASETS)
     dataloaders: DATALOADERS= field(default_factory=DATALOADERS)
+    single_preprocesses: TRANSFORMS = TRANSFORMS(
+        train=[
+            AMINO_CONF(select="AUDIO_GENERAL", conf={"fs":16000, "mono_channel": 'mean'}),
+        ],
+        val=[
+            AMINO_CONF(select="AUDIO_GENERAL", conf={"fs":16000, "mono_channel": 'mean'}),
+        ],
+        test=[
+            AMINO_CONF(select="AUDIO_GENERAL", conf={"fs":16000, "mono_channel": 'mean'}),
+        ],
+    )
+    after_transform: TRANSFORMS = TRANSFORMS(
+        train=[
+            AMINO_CONF(select="FFT", conf={"n_fft": 512}),
+        ],
+        val=[
+            AMINO_CONF(select="FFT", conf={"n_fft": 512})
+        ],
+        test=[
+            AMINO_CONF(select="FFT", conf={"n_fft": 512})
+        ],
+    )

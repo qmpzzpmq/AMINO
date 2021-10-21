@@ -40,17 +40,17 @@ class TOYADMOS2_DATASET(tdata.Dataset):
             return None
         if self.preprocess_func is not None:
             try:
-                data, fs = self.preprocess_func(data, fs)
+                data = self.preprocess_func([data, fs])
             except Exception as e:
                 logging.warning(
                     f"Something wrong with preprocess {self.file_list[index]}, skip the preprocessit"
                 )
                 logging.warning(e)
-                return data, fs
-        return data, fs
+                return data
+        return data
         
 
 def init_dataset(dataset_conf):
-    dataset_class = eval(f"{dataset_conf['select']}")
+    dataset_class = eval(dataset_conf['select'])
     dataset = dataset_class(**dataset_conf['conf'])
     return dataset

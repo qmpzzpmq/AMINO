@@ -1,0 +1,48 @@
+expname: "test"
+
+temp:
+  target_dir: "/haoyu/data/ToyADMOS2_clean"
+  task: "ToyTrain" # "ToyTrain" "ToyCar"
+  nfft: 512
+
+datamodule:
+  datasets:
+    train:
+      select: "TOYADMOS2_DATASET"
+      conf:
+        path: ${temp.target_dir}/${temp.task}/train
+    val:
+      select: "TOYADMOS2_DATASET"
+      conf:
+        path: ${temp.target_dir}/${temp.task}/source_test
+    test: 
+      select: "TOYADMOS2_DATASET"
+      conf:
+        path: ${temp.target_dir}/${temp.task}/target_test
+  # detaloaders:
+  #   train:
+  #     
+  after_transform:
+    train:
+      - select: "FFT"
+        conf:
+          n_fft: ${temp.nfft}
+    val:
+      - select: "FFT"
+        conf:
+          n_fft: ${temp.nfft}
+    test:
+      - select: "FFT"
+        conf:
+          n_fft: ${temp.nfft}
+
+module:
+  select: "AMINO_AUTOENCODER"
+  conf:
+    net_conf:
+      conf:
+        feature_dim: '${nfft2fea_dim: ${temp.nfft}}' #257 # should be ${temp.nfft} / 2 + 1
+
+trainer:
+  gpus: 0
+  #  - 0

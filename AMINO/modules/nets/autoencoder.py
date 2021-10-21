@@ -20,10 +20,11 @@ class simple_autoencoder(nn.Module):
         dec_layers = []
         for i in range(len(dec_dim)-1):
             dec_layers.append(nn.Linear(dec_dim[i], dec_dim[i+1]))
-        self.enc = nn.Sequential(enc_layers)
-        self.dec = nn.Sequential(dec_layers)
+        self.enc = nn.Sequential(*enc_layers)
+        self.dec = nn.Sequential(*dec_layers)
 
     def forward(self, x):
+        # x: (B, C, T, F)
         h = self.enc(x)
         y = self.dec(h)
         return y

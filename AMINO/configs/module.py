@@ -17,21 +17,18 @@ class FFT(ABC):
 class FRONTEND(ABC):
     fft: FFT = field(default_factory=FFT)
 
-@type_checked_constructor()
 @dataclass
-class OPTIM(ABC):
-    select: str = ""
+class OPTIM(AMINO_CONF, ABC):
     contiguous_params: bool = False
-    conf: Any = field(default_factory=dict)
 
 @type_checked_constructor()
 @dataclass
 class MODULE_CONF(ABC):
-    loss: AMINO_CONF = AMINO_CONF(select="torch.nn.MSELoss", conf={"reduction": "sum"})
-    optim: OPTIM = OPTIM(
-        select="torch.optim.Adam", contiguous_params=True, conf={"lr": "0.001"}
+    loss_conf: AMINO_CONF = AMINO_CONF(select="torch.nn.MSELoss", conf={"reduction": "none"})
+    optim_conf: OPTIM = OPTIM(
+        select="torch.optim.Adam", contiguous_params=False, conf={"lr": 0.001}
     )
-    scheduler: AMINO_CONF = AMINO_CONF(
+    scheduler_conf: AMINO_CONF = AMINO_CONF(
         select="lambdalr", conf={"last_epoch": -1, "lr_lambda":'lambda epoch: 0.95 ** epoch'}
     )
-    net: AMINO_CONF = AMINO_CONF(select="simple_autoencoder")
+    net_conf: AMINO_CONF = AMINO_CONF(select="simple_autoencoder")

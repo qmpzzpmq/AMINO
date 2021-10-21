@@ -1,23 +1,143 @@
-expname: "test"
-
-temp:
-  target_dir: "/haoyu/data/ToyADMOS2_clean"
-  task: "ToyTrain" # "ToyTrain" "ToyCar"
-
 datamodule:
   datasets:
     train:
-      select: "TOYADMOS2_DATASET"
+      select: TOYADMOS2_DATASET
+      conf: {}
+    val: null
+    test: null
+  dataloaders:
+    train:
+      batch_size: 1
+      shuffle: false
+      num_workers: 0
+    val:
+      batch_size: 1
+      shuffle: false
+      num_workers: 0
+    test:
+      batch_size: 1
+      shuffle: false
+      num_workers: 0
+  single_preprocesses:
+    train:
+    - select: AUDIO_GENERAL
       conf:
-        path: ${temp.target_dir}/${temp.task}/train
-    dev:
-      select: "TOYADMOS2_DATASET"
+        fs: 16000
+        mono_channel: mean
+    val:
+    - select: AUDIO_GENERAL
       conf:
-        path: ${temp.target_dir}/${temp.task}/source_test
-    test: 
+        fs: 16000
+        mono_channel: mean
+    test:
+    - select: AUDIO_GENERAL
       conf:
-        select: "TOYADMOS2_DATASET"
-        path: ${temp.target_dir}/${temp.task}/target_test
-
+        fs: 16000
+        mono_channel: mean
+  after_transform:
+    train:
+    - select: FFT
+      conf:
+        n_fft: 512
+    val:
+    - select: FFT
+      conf:
+        n_fft: 512
+    test:
+    - select: FFT
+      conf:
+        n_fft: 512
+module:
+  select: AMINO_AUTOENCODER
+  conf:
+    loss_conf:
+      select: torch.nn.MSELoss
+      conf:
+        reduction: none
+    optim_conf:
+      select: torch.optim.Adam
+      conf:
+        lr: 0.001
+      contiguous_params: false
+    scheduler_conf:
+      select: lambdalr
+      conf:
+        last_epoch: -1
+        lr_lambda: 'lambda epoch: 0.95 ** epoch'
+    net_conf:
+      select: simple_autoencoder
+      conf: {}
+expbase:
+  exp: exp
+  tensorboard: tensorboard
+  wandb: wandb
+  neptune: neptune
+  seed: 777
+callbacks:
+  progressbar: true
+  progressbar_conf:
+    refresh_rate: 1
+    process_position: 0
+  modelcheckpoint: true
+  modelcheckpoint_conf:
+    filename: epoch{epoch}-val_loss{val_total:.2f}
+    monitor: val_total
+    save_last: true
+    save_top_k: 5
+    dirpath: ${expbase.exp}/${expname}
+  earlystopping: true
+  earlystopping_conf:
+    monitor: val_total
+    mode: max
+    min_delta: 0.001
+    patience: 5
+  gpu_stats: false
+  gpu_stats_conf:
+    memory_utilization: true
+    gpu_utilization: true
+  lr_monitor: true
+  lr_monitor_conf:
+    logging_interval: epoch
+loggers:
+  tensorboard: false
+  tensorboard_conf:
+    save_dir: ${expbase.tensorboard}/${expname}
+  wandb: false
+  wandb_conf:
+    name: ${expname}
+    save_dir: ${expbase.wandb}
+    project: AMINO
+    log_model: true
+  neptune: false
+  neptune_conf:
+    project_name: ${expbase.neptune}
+    experiment_name: '{expname}'
+    api_token: ANONYMOUS
+logging:
+  level: INFO
 trainer:
-  gpus: "0"
+  accelerator: ddp
+  accumulate_grad_batches: 1
+  amp_backend: native
+  max_epochs: 100
+  min_epochs: 5
+  amp_level: O0
+  auto_lr_find: false
+  auto_scale_batch_size: false
+  auto_select_gpus: false
+  benchmark: false
+  fast_dev_run: false
+  flush_logs_every_n_steps: 100
+  gpus: null
+  gradient_clip_val: 50
+  gradient_clip_algorithm: norm
+  log_every_n_steps: 5
+  precision: 32
+  replace_sampler_ddp: true
+  resume_from_checkpoint: ''
+temp: null
+expname: baseline
+hydra:
+  name: ''
+  run:
+    dir: ''

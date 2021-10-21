@@ -1,6 +1,7 @@
 from abc import ABC
+from typing import Any, Union, List
 
-from dataclasses import dataclass, MISSING
+from dataclasses import dataclass, MISSING, field
 from undictify import type_checked_constructor
 
 @type_checked_constructor()
@@ -14,11 +15,12 @@ class TRAINER(ABC):
     amp_level: str = 'O0'
     auto_lr_find: bool = False
     auto_scale_batch_size: bool = False
-    auto_select_gpus: bool = True
+    auto_select_gpus: bool = False
     benchmark: bool = False
     fast_dev_run: bool = False
     flush_logs_every_n_steps: int = 100
-    gpus: str = ""
+    # gpus: Union[int, str, List[int], None] = field(default_factory=None)
+    gpus: Any = None
     gradient_clip_val: int = 50
     gradient_clip_algorithm: str = 'norm'
     limit_train_batches = 1.0

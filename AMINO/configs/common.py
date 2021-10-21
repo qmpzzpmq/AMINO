@@ -13,10 +13,13 @@ class AMINO_CONF(ABC):
 @type_checked_constructor()
 @dataclass
 class RUN(ABC):
-    dir: str = "."
+    dir: str = field(default_factory=str)
 
 @type_checked_constructor()
 @dataclass
 class HYDRA(ABC):
+    name: str = field(default_factory=str)
     output_subdir = None
     run: RUN = field(default_factory=RUN)
+    hydra_logging = None
+    log_logging = None

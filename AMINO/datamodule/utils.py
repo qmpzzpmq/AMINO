@@ -65,4 +65,7 @@ class MulPadCollate(object):
                 padded_each_data = [pad_tensor(x, max_len, self.dim) for x in each_data]
                 data.append(torch.stack(padded_each_data, dim=0))
                 data_len.append(torch.tensor(each_data_len))
+            else:
+                each_data = [x[i] for x in batch]
+                data.append(each_data)
         return data, data_len

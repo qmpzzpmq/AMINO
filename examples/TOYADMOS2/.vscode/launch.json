@@ -10,12 +10,18 @@
             "request": "launch",
             "program": "AMINO/bin/train.py",
             "console": "integratedTerminal",
+            "justMyCode": true,
             "args": [
-                "--config-name", "default.yaml",
+                "--config-name", "example.yaml",
+                "hydra/job_logging=disabled",
+                "hydra/hydra_logging=disabled",
+                “hydra.run.dir=.”,
+                “hydra.output_subdir=null“,
             ],
             "env": {
                 "PYTHONPATH": "../..:${PYTHONPATH}",
                 "OC_CAUSE": "1",
+                "HYDRA_FULL_ERROR": "1"
             }
         }
     ]

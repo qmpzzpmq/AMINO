@@ -7,19 +7,21 @@ from AMINO.modules.optim import init_optim
 from AMINO.modules.scheduler import init_scheduler
 
 class AMINO_AUTOENCODER(pl.LightningModule):
-    def __init__(self, net_conf, loss_conf, optim_conf):
+    def __init__(self, net_conf, loss_conf, optim_conf=None, scheduler_conf=None):
         super().__init__()
         self.net = init_net(net_conf)
         self.loss = init_loss(loss_conf)
         if optim_conf is not None:
-            self.optim = init_optim(self.raaec, optim_conf['optim'])
-            self.scheduler = init_scheduler(self.optim, optim_conf['scheduler'])
+            self.optim = init_optim(self.net, optim_conf)
+            if scheduler_conf is not None:
+                self.scheduler = init_scheduler(self.optim, scheduler_conf)
         self.save_hyperparameters()
 
     def training_step(self, batch, batch_idx):
-        feature, target = batch
+        datas, datas_len = batch
+        feature = datas[0]
         pred = self.net(feature)
-        loss = self.loss(pred, target)
+        loss = self.loss(pred, feature).sum()/datas_len.sum()
         self.log(
             'train_loss', loss,
             on_step=True, on_epoch=True, 
@@ -28,9 +30,10 @@ class AMINO_AUTOENCODER(pl.LightningModule):
         return loss
 
     def validation_step(self, batch, batch_idx):
-        feature, target = batch
+        datas, datas_len = batch
+        feature = datas[0]
         pred = self.net(feature)
-        loss = self.loss(pred, target)
+        loss = self.loss(pred, feature).sum() / datas_len
         self.log(
             'val_loss', loss,
             on_step=True, on_epoch=True,

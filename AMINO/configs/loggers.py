@@ -7,12 +7,12 @@ from undictify import type_checked_constructor
 @type_checked_constructor()
 @dataclass
 class TENSORBOARD_CONF(ABC):
-    save_dir: str = '${base.tensorboard}/${name}'
+    save_dir: str = '${expbase.tensorboard}/${expname}'
 
 @type_checked_constructor()
 @dataclass
 class WANDB_CONF(ABC):
-    name: str = '${name}'
+    name: str = '${expname}'
     save_dir: str = '${expbase.wandb}'
     project: str = "AMINO"
     log_model: bool = True
@@ -20,7 +20,7 @@ class WANDB_CONF(ABC):
 @type_checked_constructor()
 @dataclass
 class NEPTUNE_CONF(ABC):
-    project_name: str = '${base.neptune}'
+    project_name: str = '${expbase.neptune}'
     experiment_name: str = "{expname}"
     api_token: str = "ANONYMOUS"
 
