@@ -17,11 +17,15 @@ class AMINO_AUTOENCODER(pl.LightningModule):
                 self.scheduler = init_scheduler(self.optim, scheduler_conf)
         self.save_hyperparameters()
 
-    def training_step(self, batch, batch_idx):
+    def batch2loss(self, batch):
         datas, datas_len = batch
-        feature = datas[0]
+        feature = datas
         pred = self.net(feature)
         loss = self.loss(pred, feature).sum()/datas_len.sum()
+        return loss
+
+    def training_step(self, batch, batch_idx):
+        loss = self.batch2loss(batch)
         self.log(
             'train_loss', loss,
             on_step=True, on_epoch=True, 
@@ -30,10 +34,7 @@ class AMINO_AUTOENCODER(pl.LightningModule):
         return loss
 
     def validation_step(self, batch, batch_idx):
-        datas, datas_len = batch
-        feature = datas[0]
-        pred = self.net(feature)
-        loss = self.loss(pred, feature).sum() / datas_len
+        loss = self.batch2loss(batch)
         self.log(
             'val_loss', loss,
             on_step=True, on_epoch=True,

@@ -44,5 +44,5 @@ module:
         feature_dim: '${nfft2fea_dim: ${temp.nfft}}' #257 # should be ${temp.nfft} / 2 + 1
 
 trainer:
-  gpus: 0
-  #  - 0
+  gpus:
+    - 0

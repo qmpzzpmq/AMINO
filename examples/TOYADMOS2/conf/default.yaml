@@ -114,7 +114,7 @@ loggers:
     experiment_name: '{expname}'
     api_token: ANONYMOUS
 logging:
-  level: INFO
+  level: DEBUG
 trainer:
   accelerator: ddp
   accumulate_grad_batches: 1

@@ -25,7 +25,7 @@ class EXP_BASE(ABC):
 @type_checked_constructor()
 @dataclass
 class LOGGING(ABC):
-    level: str = "INFO"
+    level: str = "DEBUG"
 
 @type_checked_constructor()
 @dataclass

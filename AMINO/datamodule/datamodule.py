@@ -1,3 +1,5 @@
+import logging
+
 import torch.utils.data as tdata
 import pytorch_lightning as pl
 
@@ -13,10 +15,12 @@ class AMINODataModule(pl.LightningDataModule):
         self.datasets = dict()
         self.collect_fns = dict()
         self.transform = {'after': dict()}
+        self.transform2device = {'after': dict()}
         for dataset in ['train', 'val', 'test']:
             self.transform['after'][dataset] = self.preprocess_get(
                 'after_transform', dataset
             )
+            self.transform2device['after'][dataset] = False
 
     def prepare_data(self):
         # Use this method to do things that might write to disk or that need to be done only from a single process in distributed settings.
@@ -89,15 +93,23 @@ class AMINODataModule(pl.LightningDataModule):
     def on_after_batch_transfer(self, batch, dataloader_idx):
         if self.trainer.training \
                 and self.transform['after'].get('train', None) is not None:
-            return self.transform['after']['train'](batch)
+            return self.batch_transform('after', 'train', batch)
         elif (self.trainer.validating or self.trainer.sanity_checking) \
                 and self.transform['after'].get('val', None) is not None:
-            return self.transform['after']['val'](batch)
+            return self.batch_transform('after', 'val', batch)
         elif self.trainer.testing \
                 and self.transform['after'].get('testing', None) is not None:
-            return self.transform['after']['testing'](batch)
+            return self.batch_transform('after', 'test', batch)
         return batch
-    
+
+    def batch_transform(self, position, key, batch):
+        if not self.transform2device[position][key]:
+            self.transform[position][key] = \
+                self.transform[position][key].to(batch[0].device)
+        batch = self.transform[position][key](batch)
+        logging.debug(f"the shape of datas: {batch[0].shape}")
+        return batch
+
     def preprocess_get(self, position, key):
         if position in self.datamodule_conf and \
                 key in self.datamodule_conf[position]:
