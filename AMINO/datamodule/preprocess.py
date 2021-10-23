@@ -4,6 +4,8 @@ import torch
 import torch.nn as nn
 import torchaudio
 
+from AMINO.modules.base_module import data_extract, data_pack
+
 class AUDIO_GENERAL(nn.Module):
     # right now only avaiable at single_preprocess
     # should be the first be single_preprocess
@@ -32,11 +34,11 @@ class FFT(nn.Module):
         super().__init__()
         self.fft = torchaudio.transforms.Spectrogram(**fft_conf, power=2)
 
-    def forward(self, ins):
-        datas, datas_len = ins
-        datas_pwr = self.fft(datas).transpose(-1, -2)
+    def forward(self, batch):
+        feature, label, datas_len = data_extract(batch)
+        feature_pwr = self.fft(feature).transpose(-1, -2)
         # right now, datas_len not correct
-        return [datas_pwr, datas_len]
+        return data_pack(feature_pwr, label, datas_len)
 
 def init_preporcesses(preprocesses_conf):
     if preprocesses_conf is not None:

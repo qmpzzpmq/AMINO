@@ -18,7 +18,7 @@ class DATALOADER(ABC):
 class DATALOADERS(ABC):
     train: DATALOADER = field(default_factory=DATALOADER)
     val: DATALOADER = field(default_factory=DATALOADER)
-    test: DATALOADER = field(default_factory=DATALOADER)
+    test: Union[DATALOADER, None] = field(default_factory=None)
 
 @type_checked_constructor()
 @dataclass

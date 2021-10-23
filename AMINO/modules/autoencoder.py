@@ -1,12 +1,10 @@
-import torch.nn as nn
-import pytorch_lightning as pl
-
 from AMINO.modules.nets.nets import init_net
 from AMINO.modules.loss import init_loss
 from AMINO.modules.optim import init_optim
 from AMINO.modules.scheduler import init_scheduler
+from AMINO.modules.base_module import AMINO_MODULE
 
-class AMINO_AUTOENCODER(pl.LightningModule):
+class AMINO_AUTOENCODER(AMINO_MODULE):
     def __init__(self, net_conf, loss_conf, optim_conf=None, scheduler_conf=None):
         super().__init__()
         self.net = init_net(net_conf)
@@ -17,15 +15,16 @@ class AMINO_AUTOENCODER(pl.LightningModule):
                 self.scheduler = init_scheduler(self.optim, scheduler_conf)
         self.save_hyperparameters()
 
-    def batch2loss(self, batch):
-        datas, datas_len = batch
-        feature = datas
+    def batch2loss(self, feature, datas_len, reduction='feature_len'):
         pred = self.net(feature)
-        loss = self.loss(pred, feature).sum()/datas_len.sum()
+        reduction_len = datas_len[0].sum() \
+            if reduction=='feature_len' else datas_len[1].sum()
+        loss = self.loss(pred, feature).sum() / reduction_len
         return loss
 
     def training_step(self, batch, batch_idx):
-        loss = self.batch2loss(batch)
+        feature, label, datas_len = self.data_extract(batch)
+        loss = self.batch2loss(feature, datas_len)
         self.log(
             'train_loss', loss,
             on_step=True, on_epoch=True, 
@@ -34,7 +33,8 @@ class AMINO_AUTOENCODER(pl.LightningModule):
         return loss
 
     def validation_step(self, batch, batch_idx):
-        loss = self.batch2loss(batch)
+        feature, label, datas_len = self.data_extract(batch)
+        loss = self.batch2loss(feature, datas_len)
         self.log(
             'val_loss', loss,
             on_step=True, on_epoch=True,

@@ -15,13 +15,11 @@ datamodule:
       select: "TOYADMOS2_DATASET"
       conf:
         path: ${temp.target_dir}/${temp.task}/source_test
-    test: 
-      select: "TOYADMOS2_DATASET"
-      conf:
-        path: ${temp.target_dir}/${temp.task}/target_test
-  # detaloaders:
-  #   train:
-  #     
+    test: null
+    # test: 
+    #   select: "TOYADMOS2_DATASET"
+    #   conf:
+    #     path: ${temp.target_dir}/${temp.task}/target_test
   after_transform:
     train:
       - select: "FFT"

@@ -5,7 +5,7 @@ import pytorch_lightning as pl
 
 from AMINO.datamodule.datasets import init_dataset
 from AMINO.datamodule.preprocess import init_preporcesses
-from AMINO.datamodule.utils import MulPadCollate, SinglePadCollate
+from AMINO.utils.datamodule import MulPadCollate, SinglePadCollate
 
 class AMINODataModule(pl.LightningDataModule):
     def __init__(self, datamodule_conf):
@@ -50,13 +50,14 @@ class AMINODataModule(pl.LightningDataModule):
             for key, value in self.datamodule_conf['datasets'].items():
                 if key in key_selects:
                     self.datasets[key] = init_dataset(value)
-                    self.datasets[key].set_preprocesses(
-                        precrocesses.get(key, None)
-                    )
-                    self.collect_fns[key] = SinglePadCollate(-1)
+                    if self.datasets[key] is not None:
+                        self.datasets[key].set_preprocesses(
+                            precrocesses.get(key, None)
+                        )
+                    self.collect_fns[key] = MulPadCollate([True, False], dim=-1)
 
     def train_dataloader(self):
-        if 'train' in self.datasets:
+        if self.datasets['train'] is not None:
             return tdata.DataLoader(
                 self.datasets['train'],
                 **self.datamodule_conf['dataloaders']['train'],
@@ -66,7 +67,7 @@ class AMINODataModule(pl.LightningDataModule):
             return None
 
     def val_dataloader(self):
-        if 'val' in self.datasets:
+        if self.datasets['val'] is not None:
             return tdata.DataLoader(
                 self.datasets['val'],
                 **self.datamodule_conf['dataloaders']['val'],
@@ -76,7 +77,7 @@ class AMINODataModule(pl.LightningDataModule):
             return None
 
     def test_dataloader(self):
-        if 'test' in self.datasets:
+        if self.datasets['test'] is not None:
             return tdata.DataLoader(
                 self.datasets['test'],
                 **self.datamodule_conf['dataloaders']['test'],
@@ -105,9 +106,8 @@ class AMINODataModule(pl.LightningDataModule):
     def batch_transform(self, position, key, batch):
         if not self.transform2device[position][key]:
             self.transform[position][key] = \
-                self.transform[position][key].to(batch[0].device)
+                self.transform[position][key].to(batch[0][0].device)
         batch = self.transform[position][key](batch)
-        logging.debug(f"the shape of datas: {batch[0].shape}")
         return batch
 
     def preprocess_get(self, position, key):

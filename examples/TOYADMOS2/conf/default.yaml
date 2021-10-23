@@ -14,10 +14,7 @@ datamodule:
       batch_size: 1
       shuffle: false
       num_workers: 0
-    test:
-      batch_size: 1
-      shuffle: false
-      num_workers: 0
+    test: null
   single_preprocesses:
     train:
     - select: AUDIO_GENERAL
