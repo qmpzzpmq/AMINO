@@ -4,14 +4,14 @@ def dynamic_import(import_path, alias=dict()):
     """dynamic import module and class
 
     :param str import_path: syntax 'module_name:class_name'
-        e.g., 'espnet.transform.add_deltas:AddDeltas'
+        e.g., 'AMINO.datamodule.datasets:TOYADMOS2_DATASET'
     :param dict alias: shortcut for registered class
     :return: imported class
     """
     if import_path not in alias and ":" not in import_path:
         raise ValueError(
             "import_path should be one of {} or "
-            'include ":", e.g. "espnet.transform.add_deltas:AddDeltas" : '
+            'include ":", e.g. "AMINO.datamodule.datasets:TOYADMOS2_DATASET" : '
             "{}".format(set(alias), import_path)
         )
     if ":" not in import_path:

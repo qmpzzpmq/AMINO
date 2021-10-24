@@ -32,7 +32,9 @@ class LOGGING(ABC):
 class TRAIN_CONFIG():
     datamodule: DATAMODULE = field(default_factory=DATAMODULE)
     module: AMINO_CONF = AMINO_CONF(
-        select='AMINO_AUTOENCODER', conf=OmegaConf.structured(MODULE_CONF))
+        select='AMINO.modules.autoencoder:AMINO_AUTOENCODER',
+        conf=OmegaConf.structured(MODULE_CONF),
+    )
     expbase: EXP_BASE = field(default_factory=EXP_BASE)
     callbacks: CALLBACKS = field(default_factory=CALLBACKS)
     loggers: LOGGERS = field(default_factory=LOGGERS)

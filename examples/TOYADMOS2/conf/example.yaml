@@ -8,34 +8,39 @@ temp:
 datamodule:
   datasets:
     train:
-      select: "TOYADMOS2_DATASET"
+      select: "AMINO.datamodule.datasets:TOYADMOS2_DATASET"
       conf:
         path: ${temp.target_dir}/${temp.task}/train
     val:
-      select: "TOYADMOS2_DATASET"
+      select: "AMINO.datamodule.datasets:TOYADMOS2_DATASET"
       conf:
         path: ${temp.target_dir}/${temp.task}/source_test
     test: null
     # test: 
-    #   select: "TOYADMOS2_DATASET"
+    #   select: "AMINO.datamodule.datasets:TOYADMOS2_DATASET"
     #   conf:
     #     path: ${temp.target_dir}/${temp.task}/target_test
   after_transform:
     train:
-      - select: "FFT"
+      - select: "AMINO.datamodule.preprocess:FFT"
         conf:
           n_fft: ${temp.nfft}
     val:
-      - select: "FFT"
+      - select: "AMINO.datamodule.preprocess:FFT"
         conf:
           n_fft: ${temp.nfft}
     test:
-      - select: "FFT"
+      - select: "AMINO.datamodule.preprocess:FFT"
         conf:
           n_fft: ${temp.nfft}
+  dataloaders:
+    train:
+      batch_size: 2
+    val:
+      batch_size: 2
 
 module:
-  select: "AMINO_AUTOENCODER"
+  select: "AMINO.modules.autoencoder:AMINO_AUTOENCODER"
   conf:
     net_conf:
       conf:

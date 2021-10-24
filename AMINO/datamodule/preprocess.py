@@ -5,6 +5,7 @@ import torch.nn as nn
 import torchaudio
 
 from AMINO.modules.base_module import data_extract, data_pack
+from AMINO.utils.dynamic_import import dynamic_import
 
 class AUDIO_GENERAL(nn.Module):
     # right now only avaiable at single_preprocess
@@ -47,7 +48,7 @@ def init_preporcesses(preprocesses_conf):
     if preprocesses_conf is not None:
         preprocesses = []
         for preprocess in preprocesses_conf:
-            preprocess_class = eval(preprocess['select'])
+            preprocess_class = dynamic_import(preprocess['select'])
             preprocess = preprocess_class(**preprocess['conf'])
             preprocesses.append(preprocess)
         return torch.nn.Sequential(*preprocesses)

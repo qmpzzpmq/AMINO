@@ -2,11 +2,11 @@ import os
 import sys
 import logging
 
-from AMINO.modules.nets.autoencoder import simple_autoencoder
+from AMINO.utils.dynamic_import import dynamic_import
 
 def init_net(net_conf):
     try:
-        net_class = eval(net_conf['select'])
+        net_class = dynamic_import(net_conf['select'])
     except Exception as e:
         logging.warning(
             f"""

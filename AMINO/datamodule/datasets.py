@@ -8,6 +8,8 @@ import torchaudio
 import torch
 import torch.utils.data as tdata
 
+from AMINO.utils.dynamic_import import dynamic_import
+
 def file_list_generator(
         path,
         prefix_normal="normal",
@@ -79,6 +81,6 @@ class TOYADMOS2_DATASET(tdata.Dataset):
 def init_dataset(dataset_conf):
     if dataset_conf is None:
         return None
-    dataset_class = eval(dataset_conf['select'])
+    dataset_class = dynamic_import(dataset_conf['select'])
     dataset = dataset_class(**dataset_conf['conf'])
     return dataset

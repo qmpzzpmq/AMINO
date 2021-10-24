@@ -23,7 +23,9 @@ class DATALOADERS(ABC):
 @type_checked_constructor()
 @dataclass
 class DATASETS(ABC):
-    train: AMINO_CONF = AMINO_CONF(select="TOYADMOS2_DATASET")
+    train: AMINO_CONF = AMINO_CONF(
+        select="AMINO.datamodule.datasets:TOYADMOS2_DATASET",
+    )
     val: Union[AMINO_CONF, None] = field(default_factory=None)
     test: Union[AMINO_CONF, None] = field(default_factory=None)
 
@@ -41,23 +43,41 @@ class DATAMODULE(ABC):
     dataloaders: DATALOADERS= field(default_factory=DATALOADERS)
     single_preprocesses: TRANSFORMS = TRANSFORMS(
         train=[
-            AMINO_CONF(select="AUDIO_GENERAL", conf={"fs":16000, "mono_channel": 'mean'}),
+            AMINO_CONF(
+                select="AMINO.datamodule.preprocess:AUDIO_GENERAL",
+                conf={"fs":16000, "mono_channel": 'mean'},
+            ),
         ],
         val=[
-            AMINO_CONF(select="AUDIO_GENERAL", conf={"fs":16000, "mono_channel": 'mean'}),
+            AMINO_CONF(
+                select="AMINO.datamodule.preprocess:AUDIO_GENERAL",
+                conf={"fs":16000, "mono_channel": 'mean'}
+            ),
         ],
         test=[
-            AMINO_CONF(select="AUDIO_GENERAL", conf={"fs":16000, "mono_channel": 'mean'}),
+            AMINO_CONF(
+                select="AMINO.datamodule.preprocess:AUDIO_GENERAL",
+                conf={"fs":16000, "mono_channel": 'mean'},
+            ),
         ],
     )
     after_transform: TRANSFORMS = TRANSFORMS(
         train=[
-            AMINO_CONF(select="FFT", conf={"n_fft": 512}),
+            AMINO_CONF(
+                select="AMINO.datamodule.preprocess:FFT",
+                conf={"n_fft": 512},
+            ),
         ],
         val=[
-            AMINO_CONF(select="FFT", conf={"n_fft": 512})
+            AMINO_CONF(
+                select="AMINO.datamodule.preprocess:FFT",
+                conf={"n_fft": 512},
+            )
         ],
         test=[
-            AMINO_CONF(select="FFT", conf={"n_fft": 512})
+            AMINO_CONF(
+                select="AMINO.datamodule.preprocess:FFT",
+                conf={"n_fft": 512},
+            )
         ],
     )

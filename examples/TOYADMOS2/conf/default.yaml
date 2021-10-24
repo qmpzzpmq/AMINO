@@ -1,7 +1,7 @@
 datamodule:
   datasets:
     train:
-      select: TOYADMOS2_DATASET
+      select: AMINO.datamodule.datasets:TOYADMOS2_DATASET
       conf: {}
     val: null
     test: null
@@ -17,42 +17,42 @@ datamodule:
     test: null
   single_preprocesses:
     train:
-    - select: AUDIO_GENERAL
+    - select: AMINO.datamodule.preprocess:AUDIO_GENERAL
       conf:
         fs: 16000
         mono_channel: mean
     val:
-    - select: AUDIO_GENERAL
+    - select: AMINO.datamodule.preprocess:AUDIO_GENERAL
       conf:
         fs: 16000
         mono_channel: mean
     test:
-    - select: AUDIO_GENERAL
+    - select: AMINO.datamodule.preprocess:AUDIO_GENERAL
       conf:
         fs: 16000
         mono_channel: mean
   after_transform:
     train:
-    - select: FFT
+    - select: AMINO.datamodule.preprocess:FFT
       conf:
         n_fft: 512
     val:
-    - select: FFT
+    - select: AMINO.datamodule.preprocess:FFT
       conf:
         n_fft: 512
     test:
-    - select: FFT
+    - select: AMINO.datamodule.preprocess:FFT
       conf:
         n_fft: 512
 module:
-  select: AMINO_AUTOENCODER
+  select: AMINO.modules.autoencoder:AMINO_AUTOENCODER
   conf:
     loss_conf:
-      select: torch.nn.MSELoss
+      select: torch.nn:MSELoss
       conf:
         reduction: none
     optim_conf:
-      select: torch.optim.Adam
+      select: torch.optim:Adam
       conf:
         lr: 0.001
       contiguous_params: false
@@ -62,7 +62,7 @@ module:
         last_epoch: -1
         lr_lambda: 'lambda epoch: 0.95 ** epoch'
     net_conf:
-      select: simple_autoencoder
+      select: AMINO.modules.nets.autoencoder:simple_autoencoder
       conf: {}
 expbase:
   exp: exp

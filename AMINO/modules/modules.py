@@ -2,11 +2,11 @@ import os
 import sys
 import logging
 
-from AMINO.modules.autoencoder import AMINO_AUTOENCODER
+from AMINO.utils.dynamic_import import dynamic_import
 
 def init_module(module_conf):
     try:
-        net_class = eval(module_conf['select'])
+        net_class = dynamic_import(module_conf['select'])
     except Exception as e:
         logging.warning(
             f"""

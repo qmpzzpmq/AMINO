@@ -1,12 +1,12 @@
 import logging
 
-import torch
 from contiguous_params import ContiguousParams
 
+from AMINO.utils.dynamic_import import dynamic_import
+
 def init_optim(model, optim_conf):
-    optim_select = optim_conf.get('select', "optim.Adam")
-    logging.warning(f"using {optim_select} builder")
-    optim_class = eval(optim_select)
+    logging.warning(f"using {optim_conf['select']} builder")
+    optim_class = dynamic_import(optim_conf['select'])
     if optim_conf.get('contiguous_params', False):
         raise NotImplementedError(
             f"contiguous_params in optim is not test yet"
