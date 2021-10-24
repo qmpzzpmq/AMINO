@@ -16,6 +16,7 @@ class AMINO_AUTOENCODER(AMINO_MODULE):
         self.save_hyperparameters()
 
     def batch2loss(self, feature, datas_len, reduction='feature_len'):
+        # feature shoule be (batch, time, feature)
         pred = self.net(feature)
         reduction_len = datas_len[0].sum() \
             if reduction=='feature_len' else datas_len[1].sum()
@@ -30,17 +31,21 @@ class AMINO_AUTOENCODER(AMINO_MODULE):
             on_step=True, on_epoch=True, 
             prog_bar=True, logger=True
         )
-        return loss
+        return {'train_loss': loss}
 
     def validation_step(self, batch, batch_idx):
-        feature, label, datas_len = self.data_extract(batch)
-        loss = self.batch2loss(feature, datas_len)
-        self.log(
-            'val_loss', loss,
-            on_step=True, on_epoch=True,
-            prog_bar=True, logger=True
-        )
-        return loss
+        feature, label, datas_len = self.data_seperation(
+            batch)
+        losses = dict()
+        for key, value in feature.items():
+            loss = self.batch2loss(value, datas_len)
+            self.log(
+                f"val_{key}_loss", loss,
+                on_step=True, on_epoch=True,
+                prog_bar=True, logger=True
+            )
+            losses[key] = loss
+        return losses
 
     def configure_optimizers(self):
         return [self.optim], [self.scheduler]
