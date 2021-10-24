@@ -10,6 +10,7 @@
 
 # Enhancement
 1. some `eval` function should be replace by dynamic_import.
+2. on-the-fly data-augment like specaug and speed should be added into preprocess
 
 # Note
 This file might overrides through https://marketplace.visualstudio.com/items?itemName=wayou.vscode-todo-highlight
