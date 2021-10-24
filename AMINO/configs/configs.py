@@ -42,7 +42,8 @@ class TRAIN_CONFIG():
     trainer: TRAINER = field(default_factory=TRAINER)
     temp: Any = None
     expname: str = "baseline"
-    hydra: HYDRA = field(default_factory=HYDRA)
+    #hydra: HYDRA = field(default_factory=HYDRA)
+    hydra: Any = None
 
 def register_OmegaConf_resolvers():
     OmegaConf.register_new_resolver("nfft2fea_dim", lambda x: int(x / 2 + 1))

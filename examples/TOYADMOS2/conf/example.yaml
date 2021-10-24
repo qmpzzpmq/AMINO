@@ -4,6 +4,7 @@ temp:
   target_dir: "/haoyu/data/ToyADMOS2_clean"
   task: "ToyTrain" # "ToyTrain" "ToyCar"
   nfft: 512
+  AMINO_DIR: "../../.."
 
 datamodule:
   datasets:
@@ -44,7 +45,8 @@ module:
   conf:
     net_conf:
       conf:
-        feature_dim: '${nfft2fea_dim: ${temp.nfft}}' #257 # should be ${temp.nfft} / 2 + 1
+        feature_dim: '${nfft2fea_dim: ${temp.nfft}}' 
+        # nfft2fea_dim could automatically transfer temp.nfft into (temp.nfft /2 + 1)
 
 trainer:
   gpus:

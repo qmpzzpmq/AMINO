@@ -2,6 +2,7 @@ import os
 import logging
 
 import hydra
+from hydra.core.hydra_config import HydraConfig
 from hydra.utils import get_original_cwd
 from omegaconf import OmegaConf
 import yaml
@@ -20,14 +21,18 @@ from AMINO.modules.modules import init_module
 )
 def main(read_cfg) -> None:
     dft_cfg = OmegaConf.structured(TRAIN_CONFIG)
+    # only for dev
     OmegaConf.save(config=dft_cfg, f=os.path.join(
         hydra.utils.get_original_cwd(), 'conf', 'default.yaml')
     )
+    
     cfg = OmegaConf.merge(dft_cfg, read_cfg)
     logging.info(f'Config: {OmegaConf.to_yaml(cfg)}')
     logging.basicConfig(
         level=cfg.logging.level,
-        format='%(asctime)s (%(module)s:%(lineno)d) %(levelname)s: %(message)s')
+        format='%(asctime)s (%(module)s:%(lineno)d) %(levelname)s: %(message)s'
+    )
+    cfg.hydra = HydraConfig.get()
 
     callbacks = init_callbacks(cfg['callbacks'])
     loggers = init_loggers(cfg['loggers'])
