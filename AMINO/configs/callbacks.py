@@ -13,7 +13,7 @@ class PROGRESSBAR_CONF(ABC):
 @dataclass
 class MODELCHECKPOINT_CONF(ABC):
     filename: str ='epoch{epoch}-val_loss{val_normal_loss:.3f}' 
-    monitor: str = 'val_total'
+    monitor: str = 'val_normal_loss'
     save_last: bool = True
     save_top_k: int = 5
     dirpath: str = '${expbase.exp}/${expname}'

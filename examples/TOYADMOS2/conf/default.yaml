@@ -78,7 +78,7 @@ callbacks:
   modelcheckpoint: true
   modelcheckpoint_conf:
     filename: epoch{epoch}-val_loss{val_normal_loss:.3f}
-    monitor: val_total
+    monitor: val_normal_loss
     save_last: true
     save_top_k: 5
     dirpath: ${expbase.exp}/${expname}
