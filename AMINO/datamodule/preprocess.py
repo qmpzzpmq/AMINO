@@ -38,6 +38,9 @@ class FFT(nn.Module):
         feature, label, datas_len = data_extract(batch)
         feature_pwr = self.fft(feature).transpose(-1, -2)
         # right now, datas_len not correct
+        datas_len[0] = (
+            (datas_len[0] - self.fft.n_fft) / self.fft.hop_length + 3
+        ).floor().to(torch.int32)
         return data_pack(feature_pwr, label, datas_len)
 
 def init_preporcesses(preprocesses_conf):
