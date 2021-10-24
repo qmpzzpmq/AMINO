@@ -61,7 +61,7 @@ class AMINODataModule(pl.LightningDataModule):
             return tdata.DataLoader(
                 self.datasets['train'],
                 **self.datamodule_conf['dataloaders']['train'],
-                collate_fn=self.collect_fns['train']
+                collate_fn=self.collect_fns['train'],
             )
         else:
             return None
@@ -71,7 +71,7 @@ class AMINODataModule(pl.LightningDataModule):
             return tdata.DataLoader(
                 self.datasets['val'],
                 **self.datamodule_conf['dataloaders']['val'],
-                collate_fn=self.collect_fns['val']
+                collate_fn=self.collect_fns['val'],
             )
         else:
             return None
@@ -114,7 +114,7 @@ class AMINODataModule(pl.LightningDataModule):
         if position in self.datamodule_conf and \
                 key in self.datamodule_conf[position]:
             return init_preporcesses(
-                self.datamodule_conf[position][key]
+                self.datamodule_conf[position][key],
             )
         else:
             return None

@@ -32,16 +32,12 @@ def main(read_cfg) -> None:
         level=cfg.logging.level,
         format='%(asctime)s (%(module)s:%(lineno)d) %(levelname)s: %(message)s'
     )
-    cfg.hydra = HydraConfig.get()
+    # cfg.hydra = HydraConfig.get()
 
     callbacks = init_callbacks(cfg['callbacks'])
     loggers = init_loggers(cfg['loggers'])
     datamodule = init_datamodule(cfg['datamodule'])
     module = init_module(cfg['module'])
-    
-    # just for debug
-    datamodule.prepare_data()
-    datamodule.setup()
 
     trainer = pl.Trainer(
         callbacks=callbacks,
@@ -50,7 +46,6 @@ def main(read_cfg) -> None:
     )
     trainer.fit(module, datamodule=datamodule)
     logging.warning("done")
-
 
 if __name__ == "__main__":
     register_OmegaConf_resolvers()

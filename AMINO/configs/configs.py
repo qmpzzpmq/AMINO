@@ -10,7 +10,7 @@ from AMINO.configs.module import MODULE_CONF
 from AMINO.configs.callbacks import CALLBACKS
 from AMINO.configs.loggers import LOGGERS
 from AMINO.configs.trainer import TRAINER
-from AMINO.configs.common import HYDRA, AMINO_CONF
+from AMINO.configs.common import AMINO_CONF
 
 
 @type_checked_constructor()
@@ -41,22 +41,7 @@ class TRAIN_CONFIG():
     logging: LOGGING = field(default_factory=LOGGING)
     trainer: TRAINER = field(default_factory=TRAINER)
     temp: Any = None
-    expname: str = "baseline"
-    #hydra: HYDRA = field(default_factory=HYDRA)
     hydra: Any = None
 
 def register_OmegaConf_resolvers():
     OmegaConf.register_new_resolver("nfft2fea_dim", lambda x: int(x / 2 + 1))
-
-# unavailable
-def cfg_check(cfg):
-    if 'feature_dim' in cfg['module']['conf']['net_conf']:
-        feature_dim = cfg['module']['conf']['net_conf']['feature_dim']
-        for dataloader_name in ['train', 'val', 'test']:
-            if dataloader_name in cfg['datamodule']['dataloaders']:
-                dataloader = cfg['datamodule']['dataloaders'][dataloader_name]
-                for transform in dataloader['after_transform']:
-                    if transform['select'] == "FFT":    
-                        nfft = transform['conf']['nfft']
-                        assert feature_dim == nfft / 2 + 1, \
-                            "please check the feature_dim {feature_dim} with nfft {nfft}, unmatch"

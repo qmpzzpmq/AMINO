@@ -81,7 +81,7 @@ callbacks:
     monitor: val_normal_loss
     save_last: true
     save_top_k: 5
-    dirpath: ${expbase.exp}/${hydra.job.name}
+    dirpath: ${expbase.exp}/${hydra:job.name}
   earlystopping: true
   earlystopping_conf:
     monitor: val_normal_loss
@@ -98,17 +98,17 @@ callbacks:
 loggers:
   tensorboard: false
   tensorboard_conf:
-    save_dir: ${expbase.tensorboard}/${hydra.job.name}
+    save_dir: ${expbase.tensorboard}/${hydra:job.name}
   wandb: false
   wandb_conf:
-    name: ${hydra.job.name}
+    name: ${hydra:job.name}
     save_dir: ${expbase.wandb}
     project: AMINO
     log_model: true
   neptune: false
   neptune_conf:
     project_name: ${expbase.neptune}
-    experiment_name: '{hydra.job.name}'
+    experiment_name: ${hydra:job.name}
     api_token: ANONYMOUS
 logging:
   level: DEBUG
@@ -133,5 +133,4 @@ trainer:
   replace_sampler_ddp: true
   resume_from_checkpoint: ''
 temp: null
-expname: baseline
 hydra: null
