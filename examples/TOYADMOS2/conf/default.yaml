@@ -77,14 +77,14 @@ callbacks:
     process_position: 0
   modelcheckpoint: true
   modelcheckpoint_conf:
-    filename: epoch{epoch}-val_loss{val_total:.2f}
+    filename: epoch{epoch}-val_loss{val_normal_loss:.3f}
     monitor: val_total
     save_last: true
     save_top_k: 5
     dirpath: ${expbase.exp}/${expname}
   earlystopping: true
   earlystopping_conf:
-    monitor: val_total
+    monitor: val_normal_loss
     mode: max
     min_delta: 0.001
     patience: 5

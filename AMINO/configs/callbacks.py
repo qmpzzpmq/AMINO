@@ -12,7 +12,7 @@ class PROGRESSBAR_CONF(ABC):
 @type_checked_constructor()
 @dataclass
 class MODELCHECKPOINT_CONF(ABC):
-    filename: str ='epoch{epoch}-val_loss{val_total:.2f}' 
+    filename: str ='epoch{epoch}-val_loss{val_normal_loss:.3f}' 
     monitor: str = 'val_total'
     save_last: bool = True
     save_top_k: int = 5
@@ -21,7 +21,7 @@ class MODELCHECKPOINT_CONF(ABC):
 @type_checked_constructor()
 @dataclass
 class EARLYSTOPPING_CONF(ABC):
-    monitor: str = 'val_total'
+    monitor: str = 'val_normal_loss'
     mode: str = 'max'
     min_delta: float = 0.001
     patience: int = 5

@@ -27,11 +27,11 @@ class AMINO_AUTOENCODER(AMINO_MODULE):
         feature, label, datas_len = self.data_extract(batch)
         loss = self.batch2loss(feature, datas_len)
         self.log(
-            'train_loss', loss,
-            on_step=True, on_epoch=True, 
-            prog_bar=True, logger=True
+            'loss', loss,
+            on_step=True, on_epoch=True,
+            prog_bar=True, logger=True,
         )
-        return {'train_loss': loss}
+        return {'loss': loss}
 
     def validation_step(self, batch, batch_idx):
         feature, label, datas_len = self.data_seperation(
