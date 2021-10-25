@@ -9,17 +9,23 @@ def data_extract(batch, feature_dim=None):
 def data_pack(feature, label, datas_len):
     return [feature, label], datas_len
 
+# FIX 
 def data_seperation(batch, seperation_dim=0):
     datas, datas_len = batch
     feature, label = datas
+    feature_len, label_len = datas_len
     out_feature = dict()
+    out_feature_lens = dict()
     for key, flag in zip(['normal', 'anormal'], [True, False]):
         idx = (label==flag).nonzero(as_tuple=True)[0]
         if idx.size(0) > 0:
             out_feature[key] = torch.index_select(
                 feature, seperation_dim, idx
             )
-    return out_feature, label, datas_len
+            out_feature_lens[key] = torch.index_select(
+                feature_len, seperation_dim, idx
+            )
+    return out_feature, label, [out_feature_lens, label_len]
 
 def data_systhetic(
         normal_feature, anormal_feature,

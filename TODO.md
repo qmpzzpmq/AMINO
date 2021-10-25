@@ -17,8 +17,8 @@
 4. more net should be support
 
 # D. Performance
-1. the anormal loss lower than normal
- 
+1. the anormal loss lower than normal # FIX ！！！
+
 # E. Note
 This file might overrides through https://marketplace.visualstudio.com/items?itemName=wayou.vscode-todo-highlight
 
