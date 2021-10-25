@@ -102,7 +102,7 @@ loggers:
   wandb: false
   wandb_conf:
     name: ${hydra:job.name}
-    save_dir: ${expbase.wandb}
+    save_dir: null
     project: AMINO
     log_model: false
   neptune: false

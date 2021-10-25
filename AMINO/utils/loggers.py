@@ -15,7 +15,7 @@ def init_loggers(loggers_conf):
 
     if loggers_conf.get('wandb', False):
         wandb_dir = loggers_conf['wandb_conf']['save_dir']
-        if not os.path.isdir(wandb_dir):
+        if (type(wandb_dir) == str) and (not os.path.isdir(wandb_dir)):
             os.makedirs(wandb_dir)
         loggers.append(
             pl.loggers.wandb.WandbLogger(**loggers_conf['wandb_conf'])

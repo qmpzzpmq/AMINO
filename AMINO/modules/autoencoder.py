@@ -15,17 +15,15 @@ class AMINO_AUTOENCODER(AMINO_MODULE):
                 self.scheduler = init_scheduler(self.optim, scheduler_conf)
         self.save_hyperparameters()
 
-    def batch2loss(self, feature, datas_len, reduction='feature_len'):
+    def batch2loss(self, feature, feature_len):
         # feature shoule be (batch, time, feature)
         pred = self.net(feature)
-        reduction_len = datas_len[0].sum() \
-            if reduction=='feature_len' else datas_len[1].sum()
-        loss = self.loss(pred, feature).sum() / reduction_len
+        loss = self.loss(pred, feature).sum() / feature_len.sum()
         return loss
 
     def training_step(self, batch, batch_idx):
         feature, label, datas_len = self.data_extract(batch)
-        loss = self.batch2loss(feature, datas_len)
+        loss = self.batch2loss(feature, datas_len[0])
         self.log(
             'loss', loss,
             on_step=True, on_epoch=True,
@@ -34,17 +32,16 @@ class AMINO_AUTOENCODER(AMINO_MODULE):
         return {'loss': loss}
 
     def validation_step(self, batch, batch_idx):
-        feature, label, datas_len = self.data_seperation(
-            batch)
+        features, features_len = self.data_seperation(batch)
         losses = dict()
-        for key, value in feature.items():
-            loss = self.batch2loss(value, datas_len[0][key])
+        for key in features.keys():
+            loss = self.batch2loss(features[key], features_len[key])
             self.log(
                 f"val_{key}_loss", loss,
                 on_step=True, on_epoch=True,
                 prog_bar=True, logger=True
             )
-            losses[key] = loss
+            losses[f"val_{key}_loss"] = loss
         return losses
 
     def configure_optimizers(self):

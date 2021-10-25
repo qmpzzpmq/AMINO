@@ -52,7 +52,8 @@ module:
 trainer:
   gpus:
     - 0
-  auto_scale_batch_size: null # "power" "binsearch", NOT IMPLEMENT yet
+  auto_scale_batch_size: null
+  log_every_n_steps: 1
 
 loggers:
   tensorboard: true

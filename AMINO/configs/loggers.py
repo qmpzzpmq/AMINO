@@ -13,7 +13,8 @@ class TENSORBOARD_CONF(ABC):
 @dataclass
 class WANDB_CONF(ABC):
     name: str = '${hydra:job.name}'
-    save_dir: str = '${expbase.wandb}'
+    # save_dir: str = ""
+    save_dir: Any = None
     project: str = "AMINO"
     log_model: bool = False
 
