@@ -30,12 +30,13 @@ def main(read_cfg) -> None:
     )
     
     cfg = OmegaConf.merge(dft_cfg, read_cfg)
+    hydra_config = HydraConfig.get()
+    OmegaConf.save(config=cfg, f=f'{hydra_config.job.name}.yaml')
     logging.info(f'Config: {OmegaConf.to_yaml(cfg)}')
     logging.basicConfig(
         level=cfg.logging.level,
         format='%(asctime)s (%(module)s:%(lineno)d) %(levelname)s: %(message)s',
     )
-    hydra_config = HydraConfig.get()
 
     callbacks = init_callbacks(cfg['callbacks'])
     loggers = init_loggers(cfg['loggers'])
