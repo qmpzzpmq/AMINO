@@ -38,7 +38,7 @@ class AMINO_AUTOENCODER(AMINO_MODULE):
             batch)
         losses = dict()
         for key, value in feature.items():
-            loss = self.batch2loss(value, datas_len)
+            loss = self.batch2loss(value, datas_len[0][key])
             self.log(
                 f"val_{key}_loss", loss,
                 on_step=True, on_epoch=True,
