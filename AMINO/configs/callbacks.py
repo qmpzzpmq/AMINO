@@ -22,7 +22,7 @@ class MODELCHECKPOINT_CONF(ABC):
 @dataclass
 class EARLYSTOPPING_CONF(ABC):
     monitor: str = 'val_normal_loss'
-    mode: str = 'max'
+    mode: str = 'min'
     min_delta: float = 0.001
     patience: int = 5
 
