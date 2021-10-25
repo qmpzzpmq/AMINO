@@ -14,6 +14,7 @@
             "args": [
                 "--config-name", "example.yaml",
                 "hydra.job.name=test",
+                "++trainer.auto_scale_batch_size='power'"
                 // "hydra/job_logging=disabled",
                 // "hydra/hydra_logging=disabled",
                 // “hydra.run.dir=.”,
