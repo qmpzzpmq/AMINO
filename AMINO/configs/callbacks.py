@@ -16,7 +16,7 @@ class MODELCHECKPOINT_CONF(ABC):
     monitor: str = 'val_normal_loss'
     save_last: bool = True
     save_top_k: int = 5
-    dirpath: str = '${expbase.exp}/${hydra:job.name}'
+    dirpath: str = 'checkpoint'
 
 @type_checked_constructor()
 @dataclass
