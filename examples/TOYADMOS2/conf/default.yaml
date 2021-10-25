@@ -81,11 +81,11 @@ callbacks:
     monitor: val_normal_loss
     save_last: true
     save_top_k: 5
-    dirpath: ${expbase.exp}/${hydra:job.name}
+    dirpath: checkpoint
   earlystopping: true
   earlystopping_conf:
     monitor: val_normal_loss
-    mode: max
+    mode: min
     min_delta: 0.001
     patience: 5
   gpu_stats: false
