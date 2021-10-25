@@ -3,6 +3,7 @@
 2. logging do not print anything, should be hydra job problem. # FIX !!!
 3. exp_dir should be fix, should be hydra job problem. # FIX !!!
 4. Hydra log file is not correct.
+5. Wandb should log hyper-parameter.
 
 # B. Test
 1. test_step in AMINO/modules/autoencoder.py haven't been test. # FIX !!!
@@ -15,7 +16,10 @@
 3. more feature should be support
 4. more net should be support
 
-# D. Note
+# D. Performance
+1. the anormal loss lower than normal
+ 
+# E. Note
 This file might overrides through https://marketplace.visualstudio.com/items?itemName=wayou.vscode-todo-highlight
 
 # Priority:
