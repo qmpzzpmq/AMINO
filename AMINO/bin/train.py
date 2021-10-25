@@ -51,6 +51,17 @@ def main(read_cfg) -> None:
     logging.warning(
         f"start {hydra_config.job.name} job at dir {os.getcwd()}",
     )
+    if cfg.trainer.auto_scale_batch_size is not None:
+        datamodule.batch_size = datamodule.datamodule_conf['dataloaders']['train']['batch_size']
+        result = trainer.tune(
+            module,
+            datamodule=datamodule,
+            # scale_batch_size_kwargs={
+            #     "batch_arg_name": "datamodule_conf.dataloaders.train.batch_size",
+            # },
+        )
+        del datamodule.batch_size
+        datamodule.datamodule_conf.dataloaders.train['batch_size'] = result["scale_batch_size"]
     trainer.fit(module, datamodule=datamodule)
     logging.warning("done")
 

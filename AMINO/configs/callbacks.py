@@ -46,7 +46,7 @@ class CALLBACKS(ABC):
     modelcheckpoint_conf: MODELCHECKPOINT_CONF = field(default_factory=MODELCHECKPOINT_CONF)
     earlystopping: bool = True
     earlystopping_conf: EARLYSTOPPING_CONF = field(default_factory=EARLYSTOPPING_CONF)
-    gpu_stats: bool = False
+    gpu_stats: bool = True
     gpu_stats_conf: GPU_STATS_CONF = field(default_factory=GPU_STATS_CONF)
     lr_monitor: bool = True
     lr_monitor_conf: LR_MONITOR_CONF = field(default_factory=LR_MONITOR_CONF)

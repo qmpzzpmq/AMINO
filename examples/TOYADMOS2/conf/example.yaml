@@ -34,9 +34,11 @@ datamodule:
           n_fft: ${temp.nfft}
   dataloaders:
     train:
-      batch_size: 2
+      batch_size: 1516 # auto_scale_batch_size 'power' in V100 16G
+      num_workers: 72
     val:
-      batch_size: 2
+      batch_size: 1516 # auto_scale_batch_size 'power' in V100 16G
+      num_workers: 72
 
 module:
   select: "AMINO.modules.autoencoder:AMINO_AUTOENCODER"
@@ -49,6 +51,11 @@ module:
 trainer:
   gpus:
     - 0
+  auto_scale_batch_size: null # "power" "binsearch", NOT IMPLEMENT yet
+
+loggers:
+  tensorboard: true
+  wandb: true
 
 hydra:
   run:

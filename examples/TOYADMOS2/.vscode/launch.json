@@ -5,7 +5,7 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "train",
+            "name": "test train",
             "type": "python",
             "request": "launch",
             "program": "AMINO/bin/train.py",
@@ -14,7 +14,6 @@
             "args": [
                 "--config-name", "example.yaml",
                 "hydra.job.name=test",
-                "++trainer.auto_scale_batch_size='power'"
                 // "hydra/job_logging=disabled",
                 // "hydra/hydra_logging=disabled",
                 // “hydra.run.dir=.”,
@@ -25,6 +24,24 @@
                 "OC_CAUSE": "1",
                 "HYDRA_FULL_ERROR": "1"
             }
-        }
+        },
+        {
+            "name": "run train",
+            "type": "python",
+            "request": "launch",
+            "program": "AMINO/bin/train.py",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "args": [
+                "--config-name", "example.yaml",
+                "hydra.job.name=run",
+                "++trainer.auto_scale_batch_size='power'"
+            ],
+            "env": {
+                "PYTHONPATH": "../..:${PYTHONPATH}",
+                "OC_CAUSE": "1",
+                "HYDRA_FULL_ERROR": "1"
+            }
+        },
     ]
 }

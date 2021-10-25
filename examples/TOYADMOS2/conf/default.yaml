@@ -88,7 +88,7 @@ callbacks:
     mode: min
     min_delta: 0.001
     patience: 5
-  gpu_stats: false
+  gpu_stats: true
   gpu_stats_conf:
     memory_utilization: true
     gpu_utilization: true
@@ -104,7 +104,7 @@ loggers:
     name: ${hydra:job.name}
     save_dir: ${expbase.wandb}
     project: AMINO
-    log_model: true
+    log_model: false
   neptune: false
   neptune_conf:
     project_name: ${expbase.neptune}

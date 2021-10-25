@@ -15,7 +15,7 @@ class WANDB_CONF(ABC):
     name: str = '${hydra:job.name}'
     save_dir: str = '${expbase.wandb}'
     project: str = "AMINO"
-    log_model: bool = True
+    log_model: bool = False
 
 @type_checked_constructor()
 @dataclass
