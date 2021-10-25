@@ -22,27 +22,33 @@ from AMINO.modules.modules import init_module
 def main(read_cfg) -> None:
     dft_cfg = OmegaConf.structured(TRAIN_CONFIG)
     # only for dev
-    OmegaConf.save(config=dft_cfg, f=os.path.join(
-        hydra.utils.get_original_cwd(), 'conf', 'default.yaml')
+    OmegaConf.save(
+        config=dft_cfg,
+        f=os.path.join(
+            hydra.utils.get_original_cwd(), 'conf', 'default.yaml',
+        )
     )
     
     cfg = OmegaConf.merge(dft_cfg, read_cfg)
     logging.info(f'Config: {OmegaConf.to_yaml(cfg)}')
     logging.basicConfig(
         level=cfg.logging.level,
-        format='%(asctime)s (%(module)s:%(lineno)d) %(levelname)s: %(message)s'
+        format='%(asctime)s (%(module)s:%(lineno)d) %(levelname)s: %(message)s',
     )
-    # cfg.hydra = HydraConfig.get()
+    hydra_config = HydraConfig.get()
 
     callbacks = init_callbacks(cfg['callbacks'])
     loggers = init_loggers(cfg['loggers'])
     datamodule = init_datamodule(cfg['datamodule'])
     module = init_module(cfg['module'])
-
     trainer = pl.Trainer(
         callbacks=callbacks,
         logger=loggers,
         **cfg['trainer'],
+    )
+
+    logging.warning(
+        f"start {hydra_config.job.name} job at dir {os.getcwd()}",
     )
     trainer.fit(module, datamodule=datamodule)
     logging.warning("done")
