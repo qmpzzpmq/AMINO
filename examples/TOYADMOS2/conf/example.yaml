@@ -34,10 +34,11 @@ datamodule:
           n_fft: ${temp.nfft}
   dataloaders:
     train:
-      batch_size: 1516 # auto_scale_batch_size 'power' in V100 16G
+      # auto_scale_batch_size 'power' in V100 16G: 1516. might to large
+      batch_size: 512 
       num_workers: 72
     val:
-      batch_size: 1516 # auto_scale_batch_size 'power' in V100 16G
+      batch_size: 512
       num_workers: 72
 
 module:
