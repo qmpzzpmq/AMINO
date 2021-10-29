@@ -25,7 +25,7 @@ def main(read_cfg) -> None:
     OmegaConf.save(
         config=dft_cfg,
         f=os.path.join(
-            hydra.utils.get_original_cwd(), 'conf', 'last_run.yaml',
+            hydra.utils.get_original_cwd(), 'conf', 'default.yaml',
         )
     )
     

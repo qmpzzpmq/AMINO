@@ -21,11 +21,22 @@ datamodule:
     test: null
   after_transform:
     train:
-    - select: AMINO.datamodule.preprocess:FFT
+    - select: AMINO.datamodule.preprocess:Spectrogram
       conf:
         n_fft: 512
+    - select: AMINO.datamodule.preprocess:SpecAug
+      conf:
+        frequency_mask:
+          F: 30
+          num_mask: 2
+        time_mask:
+          T: 40
+          num_mask: 2
+        time_streatch:
+          floor: 0.9
+          ceil: 1.1
     val:
-    - select: AMINO.datamodule.preprocess:FFT
+    - select: AMINO.datamodule.preprocess:Spectrogram
       conf:
         n_fft: 512
     test:

@@ -49,13 +49,33 @@ class DATAMODULE(ABC):
     after_transform: TRANSFORMS = TRANSFORMS(
         train=[
             AMINO_CONF(
-                select="AMINO.datamodule.preprocess:FFT",
-                conf={"n_fft": 512},
+                select="AMINO.datamodule.preprocess:MelSpectrogram",
+                conf={
+                    "n_fft": 512,
+                    "n_mels": 128,
+                },
+            ),
+            AMINO_CONF(
+                select="AMINO.datamodule.preprocess:SpecAug",
+                conf={
+                    "frequency_mask": {
+                        "F": 30,
+                        "num_mask": 2,
+                    },
+                    "time_mask": {
+                        "T": 40,
+                        "num_mask": 2,
+                    },
+                    "time_streatch": {
+                        "floor": 0.9,
+                        "ceil": 1.1
+                    }
+                }
             ),
         ],
         val=[
             AMINO_CONF(
-                select="AMINO.datamodule.preprocess:FFT",
+                select="AMINO.datamodule.preprocess:Spectrogram",
                 conf={"n_fft": 512},
             )
         ],

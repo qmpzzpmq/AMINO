@@ -28,6 +28,17 @@ datamodule:
         conf:
           n_fft: ${variables.nfft}
           n_mels: ${variables.n_mels}
+      - select: AMINO.datamodule.preprocess:SpecAug
+        conf:
+          frequency_mask:
+            F: 30
+            num_mask: 2
+          time_mask:
+            T: 30
+            num_mask: 2
+          time_streatch:
+            floor: 0.9
+            ceil: 1.1
     val:
       - select: "AMINO.datamodule.preprocess:MelSpectrogram"
         conf:
@@ -52,8 +63,10 @@ module:
   conf:
     net_conf:
       conf:
-        feature_dim: ${variables.n_mels}
         # nfft2fea_dim could automatically transfer temp.nfft into (temp.nfft /2 + 1)
+        feature_dim: ${variables.n_mels}
+        enc_num_layers: 1
+        dec_num_layers: 1
 
 trainer:
   gpus:

@@ -14,7 +14,7 @@
             "args": [
                 "--config-name", "melspectrogram_feature.yaml",
                 "hydra.job.name=test",
-                "variables.dataloaders_num_workers=0",
+                "++variables.dataloaders_num_workers=0",
                 // "++trainer.gpus=0",
                 // "++callbacks.gpu_stats=false",
                 // "hydra/job_logging=disabled",

@@ -6,17 +6,6 @@ from undictify import type_checked_constructor
 
 from AMINO.configs.common import AMINO_CONF
 
-@type_checked_constructor()
-@dataclass
-class FFT(ABC):
-    n_fft: 512
-    hop_length = 400
-
-@type_checked_constructor()
-@dataclass
-class FRONTEND(ABC):
-    fft: FFT = field(default_factory=FFT)
-
 @dataclass
 class OPTIM(AMINO_CONF, ABC):
     contiguous_params: bool = False
@@ -33,4 +22,8 @@ class MODULE_CONF(ABC):
     )
     net_conf: AMINO_CONF = AMINO_CONF(
         select="AMINO.modules.nets.autoencoder:simple_autoencoder",
+        conf={
+            "enc_num_layers": 1,
+            "dec_num_layers": 1
+        }
     )

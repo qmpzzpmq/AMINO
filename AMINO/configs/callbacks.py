@@ -23,7 +23,7 @@ class MODELCHECKPOINT_CONF(ABC):
 class EARLYSTOPPING_CONF(ABC):
     monitor: str = 'val_normal_loss_epoch'
     mode: str = 'min'
-    min_delta: float = 0.001
+    min_delta: float = 1e-6
     patience: int = 5
 
 @type_checked_constructor()
