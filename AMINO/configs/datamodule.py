@@ -10,7 +10,7 @@ from AMINO.configs.common import AMINO_CONF
 @dataclass
 class DATALOADER(ABC):
     batch_size: int = 1
-    shuffle: bool = False
+    shuffle: bool = True
     num_workers: int = 0
 
 @type_checked_constructor()

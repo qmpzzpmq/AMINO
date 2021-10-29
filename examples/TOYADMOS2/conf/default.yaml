@@ -8,11 +8,11 @@ datamodule:
   dataloaders:
     train:
       batch_size: 1
-      shuffle: false
+      shuffle: true
       num_workers: 0
     val:
       batch_size: 1
-      shuffle: false
+      shuffle: true
       num_workers: 0
     test: null
   single_preprocesses:
@@ -77,14 +77,14 @@ callbacks:
     process_position: 0
   modelcheckpoint: true
   modelcheckpoint_conf:
-    filename: epoch{epoch}-val_loss{val_normal_loss:.3f}
-    monitor: val_normal_loss
+    filename: epoch{epoch}-val_normal_loss{val_normal_loss:.3f}
+    monitor: val_normal_loss_epoch
     save_last: true
     save_top_k: 5
     dirpath: checkpoint
   earlystopping: true
   earlystopping_conf:
-    monitor: val_normal_loss
+    monitor: val_normal_loss_epoch
     mode: min
     min_delta: 0.001
     patience: 5
