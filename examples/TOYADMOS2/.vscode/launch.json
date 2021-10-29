@@ -12,7 +12,7 @@
             "console": "integratedTerminal",
             "justMyCode": true,
             "args": [
-                "--config-name", "example.yaml",
+                "--config-name", "spectrogram_feature.yaml",
                 "hydra.job.name=test",
                 // "++trainer.gpus=0",
                 // "++callbacks.gpu_stats=false",

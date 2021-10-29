@@ -120,5 +120,5 @@ trainer:
   precision: 32
   replace_sampler_ddp: true
   resume_from_checkpoint: ''
-temp: null
+variables: null
 hydra: null
