@@ -1,45 +1,47 @@
-temp:
+variables:
   target_dir: "/haoyu/data/ToyADMOS2_clean"
   task: "ToyTrain" # "ToyTrain" "ToyCar"
   nfft: 512
   AMINO_DIR: "../../.."
+  batch_size: 256
+  dataloaders_num_workers: 5
 
 datamodule:
   datasets:
     train:
       select: "AMINO.datamodule.datasets:TOYADMOS2_DATASET"
       conf:
-        path: ${temp.target_dir}/${temp.task}/train
+        path: ${variables.target_dir}/${variables.task}/train
     val:
       select: "AMINO.datamodule.datasets:TOYADMOS2_DATASET"
       conf:
-        path: ${temp.target_dir}/${temp.task}/source_test
+        path: ${variables.target_dir}/${variables.task}/source_test
     test: null
     # test: 
     #   select: "AMINO.datamodule.datasets:TOYADMOS2_DATASET"
     #   conf:
-    #     path: ${temp.target_dir}/${temp.task}/target_test
+    #     path: ${variables.target_dir}/${variables.task}/target_test
   after_transform:
     train:
       - select: "AMINO.datamodule.preprocess:FFT"
         conf:
-          n_fft: ${temp.nfft}
+          n_fft: ${variables.nfft}
     val:
       - select: "AMINO.datamodule.preprocess:FFT"
         conf:
-          n_fft: ${temp.nfft}
+          n_fft: ${variables.nfft}
     test:
       - select: "AMINO.datamodule.preprocess:FFT"
         conf:
-          n_fft: ${temp.nfft}
+          n_fft: ${variables.nfft}
   dataloaders:
     train:
       # auto_scale_batch_size 'power' in V100 16G: 1516. might to large
-      batch_size: 512 
-      num_workers: 72
+      batch_size: ${variables.batch_size}
+      num_workers: ${variables.dataloaders_num_workers}
     val:
-      batch_size: 512
-      num_workers: 72
+      batch_size: ${variables.batch_size}
+      num_workers: ${variables.dataloaders_num_workers}
 
 module:
   select: "AMINO.modules.autoencoder:AMINO_AUTOENCODER"

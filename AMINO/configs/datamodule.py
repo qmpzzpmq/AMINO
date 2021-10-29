@@ -42,24 +42,9 @@ class DATAMODULE(ABC):
     datasets: DATASETS = field(default_factory=DATASETS)
     dataloaders: DATALOADERS= field(default_factory=DATALOADERS)
     single_preprocesses: TRANSFORMS = TRANSFORMS(
-        train=[
-            AMINO_CONF(
-                select="AMINO.datamodule.preprocess:AUDIO_GENERAL",
-                conf={"fs":16000, "mono_channel": 'mean'},
-            ),
-        ],
-        val=[
-            AMINO_CONF(
-                select="AMINO.datamodule.preprocess:AUDIO_GENERAL",
-                conf={"fs":16000, "mono_channel": 'mean'}
-            ),
-        ],
-        test=[
-            AMINO_CONF(
-                select="AMINO.datamodule.preprocess:AUDIO_GENERAL",
-                conf={"fs":16000, "mono_channel": 'mean'},
-            ),
-        ],
+        train= None,
+        val= None,
+        test= None,
     )
     after_transform: TRANSFORMS = TRANSFORMS(
         train=[

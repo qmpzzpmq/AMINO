@@ -16,21 +16,9 @@ datamodule:
       num_workers: 0
     test: null
   single_preprocesses:
-    train:
-    - select: AMINO.datamodule.preprocess:AUDIO_GENERAL
-      conf:
-        fs: 16000
-        mono_channel: mean
-    val:
-    - select: AMINO.datamodule.preprocess:AUDIO_GENERAL
-      conf:
-        fs: 16000
-        mono_channel: mean
-    test:
-    - select: AMINO.datamodule.preprocess:AUDIO_GENERAL
-      conf:
-        fs: 16000
-        mono_channel: mean
+    train: null
+    val: null
+    test: null
   after_transform:
     train:
     - select: AMINO.datamodule.preprocess:FFT

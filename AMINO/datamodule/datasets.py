@@ -36,6 +36,8 @@ class TOYADMOS2_DATASET(tdata.Dataset):
             prefix_normal="normal",
             prefix_anomaly="anomaly",
             ext="wav",
+            mono_channel="mean",
+            fs=16000,
     ):
         super().__init__()
         normal_files, anormal_files = file_list_generator(
@@ -48,6 +50,15 @@ class TOYADMOS2_DATASET(tdata.Dataset):
             ],
             axis=0,
         )
+        self.fs = fs
+        if mono_channel == "mean":
+            self.mono_func = lambda x: torch.mean(x, dim=0).unsqueeze(0)
+        elif mono_channel.isdigit() and len(mono_channel) == 1:
+            self.mono_func = lambda x: x[int(mono_channel), :].unsqueeze(0)
+        else:
+            raise ValueError(
+                f"the mono_channel setting wrong, please read the help in AMINO/configs/datamodule.py"
+            )
         self.preprocess_func = None
 
     def set_preprocesses(self, preprocesses_func):
@@ -57,15 +68,28 @@ class TOYADMOS2_DATASET(tdata.Dataset):
         return len(self.file_list)
     
     def __getitem__(self, index):
+        # read
         try:
             data, fs = torchaudio.load(self.file_list[index], channels_first=True)
+            label = torch.tensor([self.label[index]])
         except Exception as e:
             logging.warning(
                 f"Something wrong with read {self.file_list[index]}, skip the utt"
             )
             logging.warning(e)
             return None
-        label = torch.tensor([self.label[index]])
+        # channel build && resample
+        try:
+            data = self.mono_func(data)
+            if fs != self.fs:
+                data = torchaudio.functional.resample(data, fs, self.fs)
+        except Exception as e:
+            logging.warning(
+                f"Something wrong with resample {self.file_list[index]}, skip the utt"
+            )
+            logging.warning(e)
+            return None
+        # preprocess
         if self.preprocess_func is not None:
             try:
                 data = self.preprocess_func([data, fs])
