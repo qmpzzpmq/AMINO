@@ -5,6 +5,7 @@ variables:
   AMINO_DIR: "../../.."
   batch_size: 256
   dataloaders_num_workers: 5
+  n_mels: 128
 
 datamodule:
   datasets:
@@ -26,14 +27,17 @@ datamodule:
       - select: "AMINO.datamodule.preprocess:MelSpectrogram"
         conf:
           n_fft: ${variables.nfft}
+          n_mels: ${variables.n_mels}
     val:
       - select: "AMINO.datamodule.preprocess:MelSpectrogram"
         conf:
           n_fft: ${variables.nfft}
+          n_mels: ${variables.n_mels}
     test:
       - select: "AMINO.datamodule.preprocess:MelSpectrogram"
         conf:
           n_fft: ${variables.nfft}
+          n_mels: ${variables.n_mels}
   dataloaders:
     train:
       # auto_scale_batch_size 'power' in V100 16G: 1516. might to large
@@ -48,7 +52,7 @@ module:
   conf:
     net_conf:
       conf:
-        feature_dim: '${nfft2fea_dim: ${variables.nfft}}' 
+        feature_dim: ${variables.n_mels}
         # nfft2fea_dim could automatically transfer temp.nfft into (temp.nfft /2 + 1)
 
 trainer:

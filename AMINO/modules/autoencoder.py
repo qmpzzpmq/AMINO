@@ -16,9 +16,10 @@ class AMINO_AUTOENCODER(AMINO_MODULE):
         self.save_hyperparameters()
 
     def batch2loss(self, feature, feature_len):
-        # feature shoule be (batch, time, feature)
+        # feature shoule be (batch, channel, time, feature)
         pred = self.net(feature)
-        loss = self.loss(pred, feature).sum() / feature_len.sum()
+        loss = self.loss(pred, feature).sum()
+        loss =  loss / feature_len.sum() / pred.size(-1)
         return loss
 
     def training_step(self, batch, batch_idx):

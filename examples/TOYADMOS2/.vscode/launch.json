@@ -12,8 +12,9 @@
             "console": "integratedTerminal",
             "justMyCode": true,
             "args": [
-                "--config-name", "spectrogram_feature.yaml",
+                "--config-name", "melspectrogram_feature.yaml",
                 "hydra.job.name=test",
+                "variables.dataloaders_num_workers=0",
                 // "++trainer.gpus=0",
                 // "++callbacks.gpu_stats=false",
                 // "hydra/job_logging=disabled",
