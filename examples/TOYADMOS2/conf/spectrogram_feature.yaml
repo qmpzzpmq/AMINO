@@ -48,7 +48,7 @@ module:
   conf:
     net_conf:
       conf:
-        feature_dim: '${nfft2fea_dim: ${temp.nfft}}' 
+        feature_dim: '${nfft2fea_dim: ${variables.nfft}}' 
         # nfft2fea_dim could automatically transfer temp.nfft into (temp.nfft /2 + 1)
 
 trainer:
