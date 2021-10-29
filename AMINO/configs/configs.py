@@ -40,7 +40,7 @@ class TRAIN_CONFIG():
     loggers: LOGGERS = field(default_factory=LOGGERS)
     logging: LOGGING = field(default_factory=LOGGING)
     trainer: TRAINER = field(default_factory=TRAINER)
-    temp: Any = None
+    variables: Any = None
     hydra: Any = None
 
 def register_OmegaConf_resolvers():
