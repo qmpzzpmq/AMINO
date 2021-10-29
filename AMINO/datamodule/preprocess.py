@@ -5,7 +5,7 @@ import torchaudio
 from AMINO.modules.base_module import data_extract, data_pack
 from AMINO.utils.dynamic_import import dynamic_import
 
-class FFT(nn.Module):
+class Spectrogram(nn.Module):
     def __init__(self, **fft_conf):
         super().__init__()
         self.fft = torchaudio.transforms.Spectrogram(**fft_conf)

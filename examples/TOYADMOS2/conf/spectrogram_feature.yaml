@@ -23,15 +23,15 @@ datamodule:
     #     path: ${variables.target_dir}/${variables.task}/target_test
   after_transform:
     train:
-      - select: "AMINO.datamodule.preprocess:FFT"
+      - select: "AMINO.datamodule.preprocess:Spectrogram"
         conf:
           n_fft: ${variables.nfft}
     val:
-      - select: "AMINO.datamodule.preprocess:FFT"
+      - select: "AMINO.datamodule.preprocess:Spectrogram"
         conf:
           n_fft: ${variables.nfft}
     test:
-      - select: "AMINO.datamodule.preprocess:FFT"
+      - select: "AMINO.datamodule.preprocess:Spectrogram"
         conf:
           n_fft: ${variables.nfft}
   dataloaders:
