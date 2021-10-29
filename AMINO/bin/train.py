@@ -17,7 +17,7 @@ from AMINO.modules.modules import init_module
 
 @hydra.main(
     config_path=os.path.join(os.getcwd(), 'conf'),
-    config_name="example.yaml",
+    config_name="spectral.yaml",
 )
 def main(read_cfg) -> None:
     dft_cfg = OmegaConf.structured(TRAIN_CONFIG)
@@ -25,7 +25,7 @@ def main(read_cfg) -> None:
     OmegaConf.save(
         config=dft_cfg,
         f=os.path.join(
-            hydra.utils.get_original_cwd(), 'conf', 'default.yaml',
+            hydra.utils.get_original_cwd(), 'conf', 'last_run.yaml',
         )
     )
     
