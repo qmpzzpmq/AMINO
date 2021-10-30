@@ -20,11 +20,13 @@ class simple_autoencoder(nn.Module):
         for i in range(len(enc_dim)-1):
             enc_layers.append(nn.Dropout(p=enc_drop_out, inplace=False))
             enc_layers.append(nn.Linear(enc_dim[i], enc_dim[i+1]))
+            enc_layers.append(nn.BatchNorm2d(1))
             enc_layers.append(nn.ReLU(inplace=True))
         dec_layers = []
         for i in range(len(dec_dim)-1):
             dec_layers.append(nn.Dropout(p=dec_drop_out, inplace=False))
             dec_layers.append(nn.Linear(dec_dim[i], dec_dim[i+1]))
+            dec_layers.append(nn.BatchNorm2d(1))
             dec_layers.append(nn.ReLU(inplace=True))
         self.enc = nn.Sequential(*enc_layers)
         self.dec = nn.Sequential(*dec_layers)

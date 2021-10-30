@@ -23,10 +23,8 @@ class DATALOADERS(ABC):
 @type_checked_constructor()
 @dataclass
 class DATASETS(ABC):
-    train: AMINO_CONF = AMINO_CONF(
-        select="AMINO.datamodule.datasets:TOYADMOS2_DATASET",
-    )
-    val: Union[AMINO_CONF, None] = field(default_factory=None)
+    train: Union[List[AMINO_CONF], None] = field(default_factory=None)
+    val: Union[List[AMINO_CONF], None] = field(default_factory=None)
     test: Union[AMINO_CONF, None] = field(default_factory=None)
 
 @type_checked_constructor()

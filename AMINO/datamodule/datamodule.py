@@ -3,7 +3,7 @@ import logging
 import torch.utils.data as tdata
 import pytorch_lightning as pl
 
-from AMINO.datamodule.datasets import init_dataset
+from AMINO.datamodule.datasets import init_datasets
 from AMINO.datamodule.preprocess import init_preporcesses
 from AMINO.utils.datamodule import MulPadCollate, SinglePadCollate
 
@@ -49,7 +49,7 @@ class AMINODataModule(pl.LightningDataModule):
                 precrocesses[key] = init_preporcesses(value)
             for key, value in self.datamodule_conf['datasets'].items():
                 if key in key_selects:
-                    self.datasets[key] = init_dataset(value)
+                    self.datasets[key] = init_datasets(value)
                     if self.datasets[key] is not None:
                         self.datasets[key].set_preprocesses(
                             precrocesses.get(key, None)

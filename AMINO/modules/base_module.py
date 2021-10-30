@@ -15,7 +15,7 @@ def data_seperation(batch, seperation_dim=0):
     feature_len, label_len = datas_len
     out_feature = dict()
     out_feature_lens = dict()
-    for key, flag in zip(['normal', 'anormal'], [True, False]):
+    for key, flag in zip(['normal', 'anomaly'], [True, False]):
         idx = (label==flag).nonzero(as_tuple=True)[0]
         if idx.size(0) > 0:
             out_feature[key] = torch.index_select(

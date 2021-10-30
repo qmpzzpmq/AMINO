@@ -23,11 +23,16 @@ def file_list_generator(
                 "{path}/*_{prefix}_*.{ext}".format(
                     path=path,
                     prefix=prefix,
-                    ext=ext
+                    ext=ext,
                 )
             )
         )
     return files_list
+
+class AMINO_ConcatDataset(torch.utils.data.ConcatDataset):
+    def set_preprocesses(self, preprocesses_func):
+        for i in range(len(self.datasets)):
+            self.datasets[i].preprocess_func = preprocesses_func
 
 class TOYADMOS2_DATASET(tdata.Dataset):
     def __init__(
@@ -99,8 +104,7 @@ class TOYADMOS2_DATASET(tdata.Dataset):
                 )
                 logging.warning(e)
                 return data, label
-        return data, label
-        
+        return data, label 
 
 def init_dataset(dataset_conf):
     if dataset_conf is None:
@@ -108,3 +112,16 @@ def init_dataset(dataset_conf):
     dataset_class = dynamic_import(dataset_conf['select'])
     dataset = dataset_class(**dataset_conf['conf'])
     return dataset
+
+def init_datasets(datasets_conf):
+    datasets = []
+    for dataset_conf in datasets_conf:
+        dataset = init_dataset(dataset_conf)
+        if dataset is None:
+            continue
+        else:
+            datasets.append(dataset)
+    if len(datasets) > 0:
+        return AMINO_ConcatDataset(datasets)
+    else:
+        return None
