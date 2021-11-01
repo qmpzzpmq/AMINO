@@ -99,8 +99,11 @@ class AMINODataModule(pl.LightningDataModule):
                 and self.transform['after'].get('val', None) is not None:
             return self.batch_transform('after', 'val', batch)
         elif self.trainer.testing \
-                and self.transform['after'].get('testing', None) is not None:
+                and self.transform['after'].get('test', None) is not None:
             return self.batch_transform('after', 'test', batch)
+        elif self.trainer.predicting \
+                and self.transform['after'].get('predict', None) is not None:
+            return self.batch_transform('after', 'predict', batch)
         return batch
 
     def batch_transform(self, position, key, batch):

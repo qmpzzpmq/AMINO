@@ -25,7 +25,7 @@ class DATALOADERS(ABC):
 class DATASETS(ABC):
     train: Union[List[AMINO_CONF], None] = field(default_factory=None)
     val: Union[List[AMINO_CONF], None] = field(default_factory=None)
-    test: Union[AMINO_CONF, None] = field(default_factory=None)
+    test: Union[List[AMINO_CONF], None] = field(default_factory=None)
 
 @type_checked_constructor()
 @dataclass

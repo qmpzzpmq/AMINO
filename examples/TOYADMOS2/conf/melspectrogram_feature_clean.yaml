@@ -1,31 +1,24 @@
 variables:
   datasource1: "/haoyu/data/ToyADMOS2/zip/toyadmos2_example_table3/paper_table3_clean"
-  datasource2: "/haoyu/data/ToyADMOS2/zip/toyadmos2_example_table3/paper_table3_minus6dB"
-  datasource3: "/haoyu/data/ToyADMOS2/zip/toyadmos2_example_table3/paper_table3_plus6dB"
   task: "ToyTrain" # "ToyTrain" "ToyCar"
-  nfft: 512
+  nfft: 1024
   batch_size: 256
   dataloaders_num_workers: 5
-  n_mels: 128
+  n_mels: 64
 
 datamodule:
   datasets:
     train:
-        - select: "AMINO.datamodule.datasets:TOYADMOS2_DATASET"
-          conf:
-            path: ${variables.datasource1}/${variables.task}/train
-        - select: "AMINO.datamodule.datasets:TOYADMOS2_DATASET"
-          conf:
-            path: ${variables.datasource2}/${variables.task}/train
-        - select: "AMINO.datamodule.datasets:TOYADMOS2_DATASET"
-          conf:
-            path: ${variables.datasource3}/${variables.task}/train
+      - select: "AMINO.datamodule.datasets:TOYADMOS2_DATASET"
+        conf:
+          path: ${variables.datasource1}/${variables.task}/train
     val:
-        - select: "AMINO.datamodule.datasets:TOYADMOS2_DATASET"
-          conf:
-            path: ${variables.datasource1}/${variables.task}/source_test
-            # path: ${variables.target_dir}/${variables.task}/target_test
-    test: null
+      - select: "AMINO.datamodule.datasets:TOYADMOS2_DATASET"
+        conf:
+          path: ${variables.datasource1}/${variables.task}/source_test
+          # path: ${variables.target_dir}/${variables.task}/target_test
+    test: 
+      -  null
     # test: 
     #   select: "AMINO.datamodule.datasets:TOYADMOS2_DATASET"
     #   conf:
@@ -86,7 +79,7 @@ trainer:
 
 callbacks:
   earlystopping_conf:
-    patience: 50
+    patience: 5
 
 loggers:
   tensorboard: true

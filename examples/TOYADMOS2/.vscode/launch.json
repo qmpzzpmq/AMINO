@@ -28,5 +28,23 @@
                 "HYDRA_FULL_ERROR": "1"
             }
         },
+        {
+            "name": "feature_check",
+            "type": "python",
+            "request": "launch",
+            "program": "AMINO/tools/feature_statistics.py",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "args": [
+                "--config-name", "melspectrogram_feature_clean.yaml",
+                "hydra.job.name=data_check",
+                "++variables.dataloaders_num_workers=0",
+            ],
+            "env": {
+                "PYTHONPATH": "../..:${PYTHONPATH}",
+                "OC_CAUSE": "1",
+                "HYDRA_FULL_ERROR": "1"
+            }
+        },
     ]
 }

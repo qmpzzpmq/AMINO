@@ -1,0 +1,98 @@
+variables:
+  datasource1: "/haoyu/data/ToyADMOS2/zip/toyadmos2_example_table3/paper_table3_clean"
+  datasource2: "/haoyu/data/ToyADMOS2/zip/toyadmos2_example_table3/paper_table3_minus6dB"
+  datasource3: "/haoyu/data/ToyADMOS2/zip/toyadmos2_example_table3/paper_table3_plus6dB"
+  task: "ToyTrain" # "ToyTrain" "ToyCar"
+  nfft: 1024
+  batch_size: 256
+  dataloaders_num_workers: 5
+  n_mels: 64
+
+datamodule:
+  datasets:
+    train:
+      - select: "AMINO.datamodule.datasets:TOYADMOS2_DATASET"
+        conf:
+          path: ${variables.datasource1}/${variables.task}/train
+      - select: "AMINO.datamodule.datasets:TOYADMOS2_DATASET"
+        conf:
+          path: ${variables.datasource2}/${variables.task}/train
+      - select: "AMINO.datamodule.datasets:TOYADMOS2_DATASET"
+        conf:
+          path: ${variables.datasource3}/${variables.task}/train
+    val:
+      - select: "AMINO.datamodule.datasets:TOYADMOS2_DATASET"
+        conf:
+          path: ${variables.datasource1}/${variables.task}/source_test
+          # path: ${variables.target_dir}/${variables.task}/target_test
+    test: 
+      - null
+    # test: 
+    #   select: "AMINO.datamodule.datasets:TOYADMOS2_DATASET"
+    #   conf:
+    #     path: ${variables.target_dir}/${variables.task}/target_test
+  after_transform:
+    train:
+      - select: "AMINO.datamodule.preprocess:MelSpectrogram"
+        conf:
+          n_fft: ${variables.nfft}
+          n_mels: ${variables.n_mels}
+      - select: AMINO.datamodule.preprocess:SpecAug
+        conf:
+          frequency_mask:
+            F: 30
+            num_mask: 2
+          time_mask:
+            T: 30
+            num_mask: 2
+          time_streatch:
+            floor: 0.9
+            ceil: 1.1
+    val:
+      - select: "AMINO.datamodule.preprocess:MelSpectrogram"
+        conf:
+          n_fft: ${variables.nfft}
+          n_mels: ${variables.n_mels}
+    test:
+      - select: "AMINO.datamodule.preprocess:MelSpectrogram"
+        conf:
+          n_fft: ${variables.nfft}
+          n_mels: ${variables.n_mels}
+  dataloaders:
+    train:
+      # auto_scale_batch_size 'power' in V100 16G: 1516. might to large
+      batch_size: ${variables.batch_size}
+      num_workers: ${variables.dataloaders_num_workers}
+    val:
+      batch_size: ${variables.batch_size}
+      num_workers: ${variables.dataloaders_num_workers}
+
+module:
+  select: "AMINO.modules.autoencoder:AMINO_AUTOENCODER"
+  conf:
+    net_conf:
+      conf:
+        # nfft2fea_dim could automatically transfer temp.nfft into (temp.nfft /2 + 1)
+        feature_dim: ${variables.n_mels}
+        enc_num_layers: 4
+        dec_num_layers: 4
+        enc_embed_dim: 128
+        dec_embed_dim: 128
+
+trainer:
+  gpus: 
+    - 0
+  auto_scale_batch_size: null
+  log_every_n_steps: 1
+
+callbacks:
+  earlystopping_conf:
+    patience: 5
+
+loggers:
+  tensorboard: true
+  wandb: true
+
+hydra:
+  run:
+    dir: exp/${now:%Y-%m-%d}/${now:%H-%M-%S}

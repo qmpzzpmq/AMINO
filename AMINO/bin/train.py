@@ -2,10 +2,7 @@ import os
 import logging
 
 import hydra
-from hydra.core.hydra_config import HydraConfig
-from hydra.utils import get_original_cwd
 from omegaconf import OmegaConf
-import yaml
 
 import pytorch_lightning as pl
 
@@ -30,7 +27,7 @@ def main(read_cfg) -> None:
     )
     
     cfg = OmegaConf.merge(dft_cfg, read_cfg)
-    hydra_config = HydraConfig.get()
+    hydra_config = hydra.core.hydra_config.HydraConfig.get()
     OmegaConf.save(config=cfg, f=f'{hydra_config.job.name}.yaml')
     logging.info(f'Config: {OmegaConf.to_yaml(cfg)}')
     logging.basicConfig(
