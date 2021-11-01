@@ -4,14 +4,10 @@ import logging
 import hydra
 from omegaconf import OmegaConf
 
-import torch
-import torch.nn as nn
 import pytorch_lightning as pl
 
 from AMINO.configs.configs import TRAIN_CONFIG, register_OmegaConf_resolvers
 from AMINO.datamodule.datamodule import init_datamodule
-from AMINO.utils.callbacks import init_callbacks
-from AMINO.utils.loggers import init_loggers
 from AMINO.modules.modules import init_module
 
 @hydra.main(

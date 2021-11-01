@@ -12,7 +12,7 @@
             "console": "integratedTerminal",
             "justMyCode": true,
             "args": [
-                "--config-name", "melspectrogram_feature.yaml",
+                "--config-name", "melspectrogram_feature_combine.yaml",
                 "hydra.job.name=test",
                 "++variables.dataloaders_num_workers=0",
                 // "++trainer.gpus=0",
