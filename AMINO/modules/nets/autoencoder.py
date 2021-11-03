@@ -152,4 +152,10 @@ class conv_autoencoder(nn.Module):
         return y
     
     def resume_from_cnn10(self, path):
-        pass
+        #self == model
+        model_dict = self.state_dict()
+        pretrained_dict = torch.load(path)
+        pretrained_model_dict = pretrained_dict.get("model")
+        pretrained_model_dict = {k: v for k, v in pretrained_model_dict.items() if k in model_dict}
+        model_dict.update(pretrained_model_dict)
+        self.load_state_dict(model_dict)
