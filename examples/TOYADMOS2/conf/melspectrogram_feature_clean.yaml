@@ -70,6 +70,7 @@ module:
         dec_num_layers: 4
         enc_embed_dim: 128
         dec_embed_dim: 128
+        resume_from_cnn10: "dummp path"
 
 trainer:
   gpus: 

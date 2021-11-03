@@ -112,6 +112,7 @@ class conv_autoencoder(nn.Module):
         channels=[64, 128, 256, 512],
         enc_dropout_p=0.2,
         dec_dropout_p=0.2,
+        resume_from_cnn10=None,
     ):
         super().__init__()
         layers = []
@@ -141,9 +142,14 @@ class conv_autoencoder(nn.Module):
                 nn.Dropout(dec_dropout_p)
             )
         self.dec = nn.Sequential(*layers)
+        if resume_from_cnn10 is not None:
+            self.resume_from_cnn10(resume_from_cnn10)
 
     def forward(self, x):
         # x: (B, C, T, F)
         h = self.enc(x)
         y = self.dec(h)
         return y
+    
+    def resume_from_cnn10(self, path):
+        pass
