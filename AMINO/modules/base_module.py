@@ -4,6 +4,11 @@ import torch
 import torch.nn as nn
 import pytorch_lightning as pl
 
+from AMINO.modules.nets.nets import init_net
+from AMINO.modules.loss import init_loss
+from AMINO.modules.optim import init_optim
+from AMINO.modules.scheduler import init_scheduler
+
 def data_extract(batch, feature_dim=None):
     datas, datas_len = batch
     feature, label = datas
@@ -37,6 +42,16 @@ def data_systhetic(
     return data_pack(feature, label, datas_len)
 
 class AMINO_MODULE(pl.LightningModule):
+    def __init__(self, net_conf, loss_conf, optim_conf=None, scheduler_conf=None):
+        super().__init__()
+        self.net = init_net(net_conf)
+        self.loss = init_loss(loss_conf)
+        if optim_conf is not None:
+            self.optim = init_optim(self.net, optim_conf)
+            if scheduler_conf is not None:
+                self.scheduler = init_scheduler(self.optim, scheduler_conf)
+        self.save_hyperparameters()
+
     def data_extract(self, batch, feature_dim=None):
         return data_extract(batch, feature_dim)
 

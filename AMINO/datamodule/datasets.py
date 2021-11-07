@@ -1,14 +1,48 @@
 import logging
-import os
+import random
 import glob
 
 import numpy as np
 
 import torchaudio
+import torchaudio.sox_effects as sox_effects
 import torch
 import torch.utils.data as tdata
 
 from AMINO.utils.dynamic_import import dynamic_import
+
+# copy from https://github.com/wenet-e2e/wenet/blob/main/wenet/dataset/dataset_deprecated.py
+# add speed perturb when loading wav
+# return augmented, sr
+def _load_wav_with_speed(wav_file, speed):
+    """ Load the wave from file and apply speed perpturbation
+    Args:
+        wav_file: input feature, T * F 2D
+    Returns:
+        augmented feature
+    """
+    if speed == 1.0:
+        wav, sr = torchaudio.load(wav_file)
+    else:
+        sample_rate = torchaudio.backend.sox_io_backend.info(
+            wav_file).sample_rate
+        # get torchaudio version
+        ta_no = torchaudio.__version__.split(".")
+        ta_version = 100 * int(ta_no[0]) + 10 * int(ta_no[1])
+
+        if ta_version < 80:
+            # Note: deprecated in torchaudio>=0.8.0
+            E = sox_effects.SoxEffectsChain()
+            E.append_effect_to_chain('speed', speed)
+            E.append_effect_to_chain("rate", sample_rate)
+            E.set_input_file(wav_file)
+            wav, sr = E.sox_build_flow_effects()
+        else:
+            # Note: enable in torchaudio>=0.8.0
+            wav, sr = sox_effects.apply_effects_file(
+                wav_file,
+                [['speed', str(speed)], ['rate', str(sample_rate)]])
+    return wav, sr
 
 def file_list_generator(
         path,
@@ -43,6 +77,8 @@ class TOYADMOS2_DATASET(tdata.Dataset):
             ext="wav",
             mono_channel="mean",
             fs=16000,
+            speed_perturb=[1.0, 1.1, 0.9],
+            speed_perturb_weight=[1, 1, 1]
     ):
         super().__init__()
         normal_files, anormal_files = file_list_generator(
@@ -64,6 +100,8 @@ class TOYADMOS2_DATASET(tdata.Dataset):
             raise ValueError(
                 f"the mono_channel setting wrong, please read the help in AMINO/configs/datamodule.py"
             )
+        self.speed_perturb = speed_perturb
+        self.speed_perturb_weight = speed_perturb_weight
         self.preprocess_func = None
 
     def set_preprocesses(self, preprocesses_func):
@@ -75,7 +113,16 @@ class TOYADMOS2_DATASET(tdata.Dataset):
     def __getitem__(self, index):
         # read
         try:
-            data, fs = torchaudio.load(self.file_list[index], channels_first=True)
+            # data, fs = torchaudio.load(self.file_list[index], channels_first=True)
+            speed = random.choices(
+                self.speed_perturb,
+                self.speed_perturb_weight,
+                k=1
+            )[0] if self.speed_perturb is not None else 1.0
+            data, fs = _load_wav_with_speed(
+                self.file_list[index],
+                speed,
+            )
             label = torch.tensor([self.label[index]])
         except Exception as e:
             logging.warning(

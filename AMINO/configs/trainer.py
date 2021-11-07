@@ -32,6 +32,7 @@ class TRAINER(ABC):
     precision: int = 32
     replace_sampler_ddp: bool = True
     resume_from_checkpoint: str = ""
+    profiler: Union[str, None] = None
 
 # Union types are not supported (except Optional)
 # https://hydra.cc/docs/next/tutorials/structured_config/intro/#structured-configs-limitations

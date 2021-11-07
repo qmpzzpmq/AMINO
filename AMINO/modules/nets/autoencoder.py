@@ -27,7 +27,7 @@ class ConvBlock(nn.Module):
             pool_class="torch.nn:AvgPool2d",    
         ):
         super().__init__()
-        conv_clas = dynamic_import(conv_class)
+        conv_class = dynamic_import(conv_class)
         pool_class = dynamic_import(pool_class)
         self.net = nn.Sequential(
             conv_class(
@@ -65,32 +65,28 @@ class ConvBlock(nn.Module):
 class simple_autoencoder(nn.Module):
     def __init__(
         self,
-        feature_dim=257,
-        enc_embed_dim=256,
-        enc_num_layers=5,
-        enc_drop_out=0.3,
-        dec_embed_dim=256,
-        dec_num_layers=5,
-        dec_drop_out=0.3,
+        feature_dim=128,
+        hidden_dims= [128, 128, 128, 128, 8],
+        enc_drop_out=0.2,
+        dec_drop_out=0.2,
     ):
         super().__init__()
-        enc_dim = [feature_dim] + [enc_embed_dim] * enc_num_layers
-        dec_dim = [dec_embed_dim] * dec_num_layers + [feature_dim]
-
-        enc_layers = []
-        for i in range(len(enc_dim)-1):
-            enc_layers.append(nn.Dropout(p=enc_drop_out, inplace=False))
-            enc_layers.append(nn.Linear(enc_dim[i], enc_dim[i+1]))
-            enc_layers.append(nn.BatchNorm2d(1))
-            enc_layers.append(nn.ReLU(inplace=True))
-        dec_layers = []
-        for i in range(len(dec_dim)-1):
-            dec_layers.append(nn.Dropout(p=dec_drop_out, inplace=False))
-            dec_layers.append(nn.Linear(dec_dim[i], dec_dim[i+1]))
-            dec_layers.append(nn.BatchNorm2d(1))
-            dec_layers.append(nn.ReLU(inplace=True))
-        self.enc = nn.Sequential(*enc_layers)
-        self.dec = nn.Sequential(*dec_layers)
+        hidden_dims.insert(0, feature_dim)
+        num_layer = len(hidden_dims) - 1
+        layers = []
+        for i in range(num_layer):
+            layers.append(nn.Dropout(p=enc_drop_out, inplace=False))
+            layers.append(nn.Linear(hidden_dims[i], hidden_dims[i+1]))
+            layers.append(nn.BatchNorm2d(1))
+            layers.append(nn.ReLU(inplace=True))
+        self.enc = nn.Sequential(*layers)
+        layers = []
+        for i in reversed(range(num_layer)):
+            layers.append(nn.Dropout(p=dec_drop_out, inplace=False))
+            layers.append(nn.Linear(hidden_dims[i+1], hidden_dims[i]))
+            layers.append(nn.BatchNorm2d(1))
+            layers.append(nn.ReLU(inplace=True))
+        self.dec = nn.Sequential(*layers)
         # self.weight_init()
 
     def weight_init(self):
@@ -115,6 +111,7 @@ class conv_autoencoder(nn.Module):
         resume_from_cnn10=None,
     ):
         super().__init__()
+        raise NotImplementedError("not implemented yet")
         layers = []
         channels = [1] + channels
         num_layer = len(channels) - 1

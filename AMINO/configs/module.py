@@ -22,8 +22,5 @@ class MODULE_CONF(ABC):
     )
     net_conf: AMINO_CONF = AMINO_CONF(
         select="AMINO.modules.nets.autoencoder:simple_autoencoder",
-        conf={
-            "enc_num_layers": 1,
-            "dec_num_layers": 1
-        }
+        conf={},
     )

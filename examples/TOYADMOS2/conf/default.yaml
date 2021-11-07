@@ -61,9 +61,7 @@ module:
         lr_lambda: 'lambda epoch: 0.95 ** epoch'
     net_conf:
       select: AMINO.modules.nets.autoencoder:simple_autoencoder
-      conf:
-        enc_num_layers: 1
-        dec_num_layers: 1
+      conf: {}
 expbase:
   exp: exp
   tensorboard: tensorboard
@@ -132,5 +130,6 @@ trainer:
   precision: 32
   replace_sampler_ddp: true
   resume_from_checkpoint: ''
+  profiler: null
 variables: null
 hydra: null

@@ -12,9 +12,10 @@
             "console": "integratedTerminal",
             "justMyCode": true,
             "args": [
-                "--config-name", "melspectrogram_feature_combine.yaml",
+                "--config-name", "melspectrogram_feature_clean.yaml",
                 "hydra.job.name=test",
                 "++variables.dataloaders_num_workers=0",
+                "++trainer.profiler='simple'"
                 // "++trainer.gpus=0",
                 // "++callbacks.gpu_stats=false",
                 // "hydra/job_logging=disabled",
@@ -39,6 +40,24 @@
                 "--config-name", "melspectrogram_feature_clean.yaml",
                 "hydra.job.name=data_check",
                 "++variables.dataloaders_num_workers=0",
+            ],
+            "env": {
+                "PYTHONPATH": "../..:${PYTHONPATH}",
+                "OC_CAUSE": "1",
+                "HYDRA_FULL_ERROR": "1"
+            }
+        },
+        {
+            "name": "train",
+            "type": "python",
+            "request": "launch",
+            "program": "AMINO/bin/train.py",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "args": [
+                "--config-name", "melspectrogram_feature_combine.yaml",
+                "hydra.job.name=charlie_lr0.05",
+                "++module.conf.optim_conf.conf.lr=0.05",
             ],
             "env": {
                 "PYTHONPATH": "../..:${PYTHONPATH}",

@@ -6,7 +6,8 @@ variables:
   nfft: 1024
   batch_size: 256
   dataloaders_num_workers: 5
-  n_mels: 64
+  n_mels: 128
+  feature_unfold: 5
 
 datamodule:
   datasets:
@@ -37,7 +38,10 @@ datamodule:
         conf:
           n_fft: ${variables.nfft}
           n_mels: ${variables.n_mels}
-      - select: AMINO.datamodule.preprocess:SpecAug
+      - select: "AMINO.datamodule.preprocess:Feature_Unfold"
+        conf:
+          n_frame: ${variables.feature_unfold}
+      - select: "AMINO.datamodule.preprocess:SpecAug"
         conf:
           frequency_mask:
             F: 30
@@ -53,11 +57,17 @@ datamodule:
         conf:
           n_fft: ${variables.nfft}
           n_mels: ${variables.n_mels}
+      - select: "AMINO.datamodule.preprocess:Feature_Unfold"
+        conf:
+          n_frame: ${variables.feature_unfold}
     test:
       - select: "AMINO.datamodule.preprocess:MelSpectrogram"
         conf:
           n_fft: ${variables.nfft}
           n_mels: ${variables.n_mels}
+      - select: "AMINO.datamodule.preprocess:Feature_Unfold"
+        conf:
+          n_frame: ${variables.feature_unfold}
   dataloaders:
     train:
       # auto_scale_batch_size 'power' in V100 16G: 1516. might to large
@@ -72,12 +82,13 @@ module:
   conf:
     net_conf:
       conf:
-        # nfft2fea_dim could automatically transfer temp.nfft into (temp.nfft /2 + 1)
-        feature_dim: ${variables.n_mels}
-        enc_num_layers: 4
-        dec_num_layers: 4
-        enc_embed_dim: 128
-        dec_embed_dim: 128
+        feature_dim: "${product: ${variables.n_mels}, ${variables.feature_unfold}}"
+        hidden_dims:
+          - 128 
+          - 128
+          - 128
+          - 128
+          - 8
 
 trainer:
   gpus: 
