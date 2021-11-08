@@ -81,6 +81,7 @@ module:
           - 128
           - 128
           - 8
+        load_from_h5: "pretrain_module/model_ToyTrain.hdf5"
 
 trainer:
   gpus: 

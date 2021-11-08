@@ -1,4 +1,5 @@
 import logging
+from collections import OrderedDict
 
 import torch
 import torch.nn as nn
@@ -42,7 +43,13 @@ def data_systhetic(
     return data_pack(feature, label, datas_len)
 
 class AMINO_MODULE(pl.LightningModule):
-    def __init__(self, net_conf, loss_conf, optim_conf=None, scheduler_conf=None):
+    def __init__(self, 
+            net_conf, 
+            loss_conf=None,
+            optim_conf=None,
+            scheduler_conf=None,
+            cmvn=False,    
+    ):
         super().__init__()
         self.net = init_net(net_conf)
         self.loss = init_loss(loss_conf)
@@ -50,6 +57,7 @@ class AMINO_MODULE(pl.LightningModule):
             self.optim = init_optim(self.net, optim_conf)
             if scheduler_conf is not None:
                 self.scheduler = init_scheduler(self.optim, scheduler_conf)
+        self.cmvn = cmvn
         self.save_hyperparameters()
 
     def data_extract(self, batch, feature_dim=None):
@@ -72,7 +80,7 @@ class AMINO_MODULE(pl.LightningModule):
 
     # should be predict_step
     def feature_statistics(self, batch, batch_idx):
-        avg_features = dict()
+        avg_features = OrderedDict()
         features, features_len = self.data_seperation(batch)
         # avg_feature[key]: (batch, channel, time, feature)
         for key in features.keys():
@@ -85,10 +93,13 @@ class AMINO_MODULE(pl.LightningModule):
             )
         self.avg_features.update(avg_features)
         
-    def feature_statistics_end(self):
+    def feature_statistics_end(self, dump_path=None):
         for key, value in self.avg_features.items():
             logging.warning(f"{key} average feature is {value}")
-        diff = self.avg_features['normal']- self.avg_features['anomaly']
+        if dump_path is not None:
+            logging.warning(f"dump state dict to {dump_path}")
+            torch.save(self.avg_features, dump_path)
+        diff = self.avg_features['normal'] - self.avg_features['anomaly']
         logging.warning(f"the diff of two feature is {diff}")
         logging.warning(
             f"the average of normal is {self.avg_features['normal'].mean()}"

@@ -1,5 +1,5 @@
 from abc import ABC
-from typing import Any
+from typing import Any, Dict, Union
 
 from omegaconf import OmegaConf
 from dataclasses import dataclass, MISSING, field
@@ -29,6 +29,12 @@ class LOGGING(ABC):
 
 @type_checked_constructor()
 @dataclass
+class FEATURE_STATISTICS(ABC):
+    dump_path: Union[str, None] = field(default_factory=None)
+    set: str = "val"
+
+@type_checked_constructor()
+@dataclass
 class TRAIN_CONFIG():
     datamodule: DATAMODULE = field(default_factory=DATAMODULE)
     module: AMINO_CONF = AMINO_CONF(
@@ -42,6 +48,7 @@ class TRAIN_CONFIG():
     trainer: TRAINER = field(default_factory=TRAINER)
     variables: Any = None
     hydra: Any = None
+    feature_statistics: FEATURE_STATISTICS = field(default_factory=FEATURE_STATISTICS)
 
 def register_OmegaConf_resolvers():
     OmegaConf.register_new_resolver("nfft2fea_dim", lambda x: int(x / 2 + 1))

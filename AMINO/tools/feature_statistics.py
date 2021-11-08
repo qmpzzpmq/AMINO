@@ -9,15 +9,18 @@ import pytorch_lightning as pl
 from AMINO.configs.configs import TRAIN_CONFIG, register_OmegaConf_resolvers
 from AMINO.datamodule.datamodule import init_datamodule
 from AMINO.modules.modules import init_module
+from AMINO.utils.dynamic_import import path_convert
 
 @hydra.main(
     config_path=os.path.join(os.getcwd(), 'conf'),
-    config_name="spectral.yaml",
+    config_name="melspectro_feature_clean.yaml",
 )
 def main(read_cfg) -> None:
     dft_cfg = OmegaConf.structured(TRAIN_CONFIG)
 
     cfg = OmegaConf.merge(dft_cfg, read_cfg)
+    using_set = cfg.feature_statistics.get("set", "val")
+
     logging.info(f'Config: {OmegaConf.to_yaml(cfg)}')
     logging.basicConfig(
         level=cfg.logging.level,
@@ -31,11 +34,13 @@ def main(read_cfg) -> None:
     module.predict_step = module.feature_statistics
     datamodule.setup()
     datamodule.transform2device['after']['predict'] = False
-    datamodule.predict_dataloader = datamodule.val_dataloader
-    datamodule.transform['after']['predict'] = datamodule.transform['after']['val']
+    datamodule.predict_dataloader = getattr(datamodule, f"{using_set}_dataloader")
+    datamodule.transform['after']['predict'] = datamodule.transform['after'][using_set]
     trainer = pl.Trainer(**cfg['trainer'],)
     trainer.predict(module, datamodule)
-    module.feature_statistics_end()
+    module.feature_statistics_end(
+        dump_path=path_convert(cfg.feature_statistics.dump_path),
+    )
 
 
 if __name__ == "__main__":

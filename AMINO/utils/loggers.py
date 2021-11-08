@@ -4,7 +4,6 @@ import logging
 import hydra
 import pytorch_lightning as pl
 from omegaconf import DictConfig, OmegaConf
-from pytorch_lightning import loggers as pl_loggers
 
 def init_loggers(loggers_conf):
     loggers = []

@@ -12,7 +12,7 @@
             "console": "integratedTerminal",
             "justMyCode": true,
             "args": [
-                "--config-name", "melspectrogram_feature_clean.yaml",
+                "--config-name", "melspectro_feature_clean.yaml",
                 "hydra.job.name=test",
                 "++variables.dataloaders_num_workers=0",
                 "++trainer.profiler='simple'"
@@ -37,9 +37,11 @@
             "console": "integratedTerminal",
             "justMyCode": true,
             "args": [
-                "--config-name", "melspectrogram_feature_clean.yaml",
+                "--config-name", "melspectro_feature_clean.yaml",
                 "hydra.job.name=data_check",
                 "++variables.dataloaders_num_workers=0",
+                "+feature_statistics.dump_path=./feature_statistics.pt",
+                "++feature_statistics.set='train'",
             ],
             "env": {
                 "PYTHONPATH": "../..:${PYTHONPATH}",

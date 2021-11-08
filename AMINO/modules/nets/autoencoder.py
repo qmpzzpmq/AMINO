@@ -1,8 +1,13 @@
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
+from collections import OrderedDict
+import os
+import logging
 
-from AMINO.utils.dynamic_import import dynamic_import
+import h5py
+
+import torch.nn as nn
+
+from AMINO.utils.dynamic_import import dynamic_import, path_convert
+from AMINO.utils.hdf5_load import bn2d_load, conv2d_load
 
 def init_layer(layer):
     """Initialize a Linear or Convolutional layer. """
@@ -69,24 +74,29 @@ class simple_autoencoder(nn.Module):
         hidden_dims= [128, 128, 128, 128, 8],
         enc_drop_out=0.2,
         dec_drop_out=0.2,
+        load_from_h5=None
     ):
         super().__init__()
         hidden_dims.insert(0, feature_dim)
         num_layer = len(hidden_dims) - 1
-        layers = []
+        layers = OrderedDict()
         for i in range(num_layer):
-            layers.append(nn.Dropout(p=enc_drop_out, inplace=False))
-            layers.append(nn.Linear(hidden_dims[i], hidden_dims[i+1]))
-            layers.append(nn.BatchNorm2d(1))
-            layers.append(nn.ReLU(inplace=True))
-        self.enc = nn.Sequential(*layers)
-        layers = []
-        for i in reversed(range(num_layer)):
-            layers.append(nn.Dropout(p=dec_drop_out, inplace=False))
-            layers.append(nn.Linear(hidden_dims[i+1], hidden_dims[i]))
-            layers.append(nn.BatchNorm2d(1))
-            layers.append(nn.ReLU(inplace=True))
-        self.dec = nn.Sequential(*layers)
+            layers[f'dropout{i}'] = nn.Dropout(p=enc_drop_out, inplace=False)
+            layers[f'linear{i}'] = nn.Linear(hidden_dims[i], hidden_dims[i+1])
+            layers[f'batchnorm{i}'] = nn.BatchNorm2d(1)
+            layers[f'activation{i}'] = nn.ReLU(inplace=True)
+        self.enc = nn.Sequential(layers)
+        layers = OrderedDict()
+        for i in range(num_layer):
+            layers[f'dropout{i}'] = nn.Dropout(p=dec_drop_out, inplace=False)
+            layers[f'linear{i}'] = nn.Linear(hidden_dims[num_layer-i], hidden_dims[num_layer-i-1])
+            if i != (num_layer - 1):
+                layers[f'batchnorm{i}'] = nn.BatchNorm2d(1)
+                layers[f'activation{i}'] = nn.ReLU(inplace=True)
+        self.dec = nn.Sequential(layers)
+        if load_from_h5 is not None:
+            logging.warning(f"load from h5 not availeble")
+            # self.load_from_h5(load_from_h5)
         # self.weight_init()
 
     def weight_init(self):
@@ -95,6 +105,36 @@ class simple_autoencoder(nn.Module):
                 if type(layer) == nn.Linear:
                     nn.init.kaiming_uniform_(layer.weight, nonlinearity='relu')
                     nn.init.normal_(layer.bias)
+    
+    def load_from_h5(self, path):
+        path = path_convert(path)
+        with h5py.File(path) as h5_file:
+            net_weight = h5_file['model_weights']
+            for key in net_weight.keys():
+                if key.startswith('batch_normalization_'):
+                    idx = int(key.split("_", 2)[2])
+                    if idx <= 5:
+                        bn2d_load(
+                            net_weight[key][key],
+                            getattr(self.enc, f"batchnorm{idx-1}"),
+                        )
+                    else:
+                        bn2d_load(
+                            net_weight[key][key],
+                            getattr(self.dec, f"batchnorm{idx-6}"),
+                        )
+                elif key.startswith('dense_'):
+                    idx = int(key.split("_", 1)[1])
+                    if idx <= 5:
+                        conv2d_load(
+                            net_weight[key][key],
+                            getattr(self.enc, f"linear{idx-1}")
+                        )
+                    else:
+                        conv2d_load(
+                            net_weight[key][key],
+                            getattr(self.dec, f"linear{idx-6}"),
+                        )
 
     def forward(self, x):
         # x: (B, C, T, F)

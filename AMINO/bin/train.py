@@ -14,7 +14,7 @@ from AMINO.modules.modules import init_module
 
 @hydra.main(
     config_path=os.path.join(os.getcwd(), 'conf'),
-    config_name="spectral.yaml",
+    config_name="melspectro_feature_clean.yaml",
 )
 def main(read_cfg) -> None:
     dft_cfg = OmegaConf.structured(TRAIN_CONFIG)
@@ -39,6 +39,7 @@ def main(read_cfg) -> None:
     loggers = init_loggers(cfg['loggers'])
     datamodule = init_datamodule(cfg['datamodule'])
     module = init_module(cfg['module'])
+    module.summarize(mode="full")
     trainer = pl.Trainer(
         callbacks=callbacks,
         logger=loggers,
