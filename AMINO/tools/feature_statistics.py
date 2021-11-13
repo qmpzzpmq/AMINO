@@ -10,6 +10,8 @@ from AMINO.configs.configs import TRAIN_CONFIG, register_OmegaConf_resolvers
 from AMINO.datamodule.datamodule import init_datamodule
 from AMINO.modules.modules import init_module
 from AMINO.utils.dynamic_import import path_convert
+from AMINO.datamodule.preprocess import TrainDataAugment
+from AMINO.utils.dynamic_import import dynamic_import
 
 @hydra.main(
     config_path=os.path.join(os.getcwd(), 'conf'),
@@ -27,10 +29,22 @@ def main(read_cfg) -> None:
         format='%(asctime)s (%(module)s:%(lineno)d) %(levelname)s: %(message)s',
     )
 
+    feature_dim = cfg.module.conf.net_conf.conf.feature_dim
+    cmvn_path = cfg.module.conf.net_conf.conf.cmvn_path
+    cfg.module.select = "AMINO.modules.base_module:AMINO_MODULE"
+    cfg.module.conf = {}
+    cfg.trainer['strategy'] = 'ddp'
+    cfg.trainer['accelerator'] = 'cpu'
+    temp_train_after_transform = []
+    for i in cfg.datamodule.after_transform.train:
+        if not issubclass(dynamic_import(i['select']), TrainDataAugment):
+            temp_train_after_transform.append(i)
+    cfg.datamodule.after_transform.train = temp_train_after_transform
+
     datamodule = init_datamodule(cfg['datamodule'])
     module = init_module(cfg['module'])
 
-    module.feature_statistics_init(cfg.module.conf.net_conf.conf.feature_dim)
+    module.feature_statistics_init(feature_dim)
     module.predict_step = module.feature_statistics
     datamodule.setup()
     datamodule.transform2device['after']['predict'] = False
@@ -39,7 +53,7 @@ def main(read_cfg) -> None:
     trainer = pl.Trainer(**cfg['trainer'],)
     trainer.predict(module, datamodule)
     module.feature_statistics_end(
-        dump_path=path_convert(cfg.feature_statistics.dump_path),
+        dump_path=path_convert(cmvn_path),
     )
 
 

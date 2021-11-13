@@ -93,6 +93,9 @@ callbacks:
   lr_monitor: true
   lr_monitor_conf:
     logging_interval: epoch
+  model_summary: true
+  model_summary_conf:
+    max_depth: 2
 loggers:
   tensorboard: false
   tensorboard_conf:
@@ -111,12 +114,12 @@ loggers:
 logging:
   level: DEBUG
 trainer:
-  accelerator: ddp
+  accelerator: null
   accumulate_grad_batches: 1
   amp_backend: native
   max_epochs: 100
   min_epochs: 5
-  amp_level: O0
+  amp_level: null
   auto_lr_find: false
   auto_scale_batch_size: false
   auto_select_gpus: false
@@ -131,5 +134,8 @@ trainer:
   replace_sampler_ddp: true
   resume_from_checkpoint: ''
   profiler: null
+  strategy: null
 variables: null
 hydra: null
+feature_statistics:
+  set: val

@@ -7,12 +7,12 @@ from undictify import type_checked_constructor
 @type_checked_constructor()
 @dataclass
 class TRAINER(ABC):
-    accelerator: str = 'ddp'
+    accelerator: (Union[str, None]) = None
     accumulate_grad_batches: int = 1
     amp_backend: str = 'native' # 'native' 'apex'
     max_epochs: int = 100
     min_epochs: int = 5
-    amp_level: str = 'O0'
+    amp_level: Union[str, None] = None
     auto_lr_find: bool = False
     # auto_scale_batch_size: Union[str, bool, None] = None
     auto_scale_batch_size: Any = False # Temporare method
@@ -33,6 +33,7 @@ class TRAINER(ABC):
     replace_sampler_ddp: bool = True
     resume_from_checkpoint: str = ""
     profiler: Union[str, None] = None
+    strategy: Union[str, None] = None # should be pytorch_lightning > 1.5
 
 # Union types are not supported (except Optional)
 # https://hydra.cc/docs/next/tutorials/structured_config/intro/#structured-configs-limitations

@@ -30,7 +30,6 @@ class LOGGING(ABC):
 @type_checked_constructor()
 @dataclass
 class FEATURE_STATISTICS(ABC):
-    dump_path: Union[str, None] = field(default_factory=None)
     set: str = "val"
 
 @type_checked_constructor()

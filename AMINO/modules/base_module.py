@@ -44,20 +44,21 @@ def data_systhetic(
 
 class AMINO_MODULE(pl.LightningModule):
     def __init__(self, 
-            net_conf, 
+            net_conf=None, 
             loss_conf=None,
             optim_conf=None,
             scheduler_conf=None,
             cmvn=False,    
     ):
         super().__init__()
-        self.net = init_net(net_conf)
-        self.loss = init_loss(loss_conf)
+        if net_conf:
+            self.net = init_net(net_conf)
+        if loss_conf:
+            self.loss = init_loss(loss_conf)
         if optim_conf is not None:
             self.optim = init_optim(self.net, optim_conf)
             if scheduler_conf is not None:
                 self.scheduler = init_scheduler(self.optim, scheduler_conf)
-        self.cmvn = cmvn
         self.save_hyperparameters()
 
     def data_extract(self, batch, feature_dim=None):
@@ -68,11 +69,27 @@ class AMINO_MODULE(pl.LightningModule):
 
     def feature_statistics_init(self, feature_dim):
         self.avg_features = nn.ParameterDict({
-            "normal": nn.Parameter(
+            "normal_mean": nn.Parameter(
                 torch.zeros([1, feature_dim]), 
                 False
             ),
-            "anomaly": nn.Parameter(
+            "anomaly_mean": nn.Parameter(
+                torch.zeros([1, feature_dim]), 
+                False
+            ),
+            "normal_var": nn.Parameter(
+                torch.zeros([1, feature_dim]), 
+                False
+            ),
+            "anomaly_var": nn.Parameter(
+                torch.zeros([1, feature_dim]), 
+                False
+            ),
+            "normal_num": nn.Parameter(
+                torch.zeros([1, feature_dim]), 
+                False
+            ),
+            "anomaly_num": nn.Parameter(
                 torch.zeros([1, feature_dim]), 
                 False
             ),
@@ -84,28 +101,45 @@ class AMINO_MODULE(pl.LightningModule):
         features, features_len = self.data_seperation(batch)
         # avg_feature[key]: (batch, channel, time, feature)
         for key in features.keys():
-            avg_features[key] = nn.Parameter(
-                (
-                    self.avg_features[key] * self.global_step
-                    + features[key].mean(dim=(0, 2))
-                ) / (self.global_step + 1),
+            avg_features[f'{key}_mean'] = nn.Parameter(
+                self.avg_features[f'{key}_mean'] 
+                    + features[key].sum(dim=(0, 2)),
+                False,
+            )
+            avg_features[f'{key}_var'] = nn.Parameter(
+                self.avg_features[f'{key}_mean'] 
+                    + features[key].square().sum(dim=(0, 2)),
+                False,
+            )
+            avg_features[f'{key}_num'] = nn.Parameter(
+                self.avg_features[f'{key}_num'] + features_len[key].sum(),
                 False,
             )
         self.avg_features.update(avg_features)
         
     def feature_statistics_end(self, dump_path=None):
-        for key, value in self.avg_features.items():
-            logging.warning(f"{key} average feature is {value}")
+        cmvn = OrderedDict()
+        for key in ['normal', 'anomaly']:
+            cmvn[key] = OrderedDict()
+            cmvn[key]['mean'] = self.avg_features[f'{key}_mean'] / self.avg_features[f'{key}_num']
+            cmvn[key]['var'] = (
+                self.avg_features[f'{key}_mean'] / self.avg_features[f'{key}_num']
+                - cmvn[key]['mean'] **2 
+            ).clamp(min=1.0e-20)
+            cmvn[key]['var'] = 1.0 / cmvn[key]['var'].sqrt()
+            logging.info(f"{key} mean feature is {cmvn[key]['mean']}")
+            logging.info(f"{key} var features is {cmvn[key]['var']}")
         if dump_path is not None:
             logging.warning(f"dump state dict to {dump_path}")
-            torch.save(self.avg_features, dump_path)
-        diff = self.avg_features['normal'] - self.avg_features['anomaly']
-        logging.warning(f"the diff of two feature is {diff}")
+            torch.save(cmvn, dump_path)
+        for part in ['mean', 'var']:
+            diff = cmvn['normal'][part] - cmvn['anomaly'][part]
+            logging.warning(f"the diff {part} of two feature is {diff}")
         logging.warning(
-            f"the average of normal is {self.avg_features['normal'].mean()}"
+            f"the average of normal is {cmvn['normal']['mean'].mean()}"
         )
         logging.warning(
-            f"the average of anomaly is {self.avg_features['anomaly'].mean()}"
+            f"the average of normal is {cmvn['anomaly']['mean'].mean()}"
         )
         logging.warning(f"the average of diff is {diff.mean()}")
         del self.avg_features

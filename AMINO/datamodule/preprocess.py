@@ -8,6 +8,10 @@ import torchaudio
 from AMINO.modules.base_module import data_extract, data_pack
 from AMINO.utils.dynamic_import import dynamic_import
 
+class TrainDataAugment(nn.Module):
+    def __init__(self, *args, **kwargs):
+        super().__init__()
+
 class Spectrogram(nn.Module):
     def __init__(self, **fft_conf):
         super().__init__()
@@ -25,8 +29,10 @@ class MelSpectrogram(nn.Module):
     def __init__(self, **mel_conf):
         super().__init__()
         self.melspec = torchaudio.transforms.MelSpectrogram(**mel_conf)
+
     def forward(self, batch):
         feature, label, datas_len = data_extract(batch)
+        assert feature.dim() == 3
         melspec = self.melspec(feature).transpose(-1, -2)
         datas_len[0] = (
             (datas_len[0] - self.melspec.n_fft) / self.melspec.hop_length + 3
@@ -48,13 +54,15 @@ class Feature_Unfold(nn.Module):
         feature = F.pad(
             feature, pad=(0, 0, self.n_frame - 1, 0), value=0.0
         )
+        # feature: (batch, channel, time, feature) ->
+        # (batch, channel, time+self.n_frame-1, feature)
         feature = F.unfold(feature, (self.n_frame, 1)).view(
             b, c, self.n_frame, t, f
         ).transpose(2,3).reshape(b, c, t, -1)
-        # feature: (batch, channel*n_frame, Time*Feature) ->
-        # (batch, channel, n_frame, Time, Feature) ->
-        # (batch, channel, Time, n_frame, Feature) ->
-        # (batch, channel, Time, n_frame * Feature) 
+        # feature: (batch, channel*n_frame, fime*feature) ->
+        # (batch, channel, n_frame, Time, feature) ->
+        # (batch, channel, Time, n_frame, feature) ->
+        # (batch, channel, Time, n_frame * feature) 
         return data_pack(
             feature,
             label,
@@ -63,7 +71,7 @@ class Feature_Unfold(nn.Module):
         return  # (bt,chunk_size,feautres_size)
 
 # should be imporve later for T for a retio of length
-class SpecAug(nn.Module):
+class SpecAug(TrainDataAugment):
     def __init__(self, **specaug_conf):
         super().__init__()
         self.num_mask = dict()

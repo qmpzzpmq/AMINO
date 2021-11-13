@@ -39,6 +39,11 @@ class LR_MONITOR_CONF(ABC):
 
 @type_checked_constructor()
 @dataclass
+class MODEL_SUMMARY_CONF(ABC):
+    max_depth: int = 2
+
+@type_checked_constructor()
+@dataclass
 class CALLBACKS(ABC):
     progressbar: bool = True
     progressbar_conf: PROGRESSBAR_CONF = field(default_factory=PROGRESSBAR_CONF)
@@ -50,3 +55,5 @@ class CALLBACKS(ABC):
     gpu_stats_conf: GPU_STATS_CONF = field(default_factory=GPU_STATS_CONF)
     lr_monitor: bool = True
     lr_monitor_conf: LR_MONITOR_CONF = field(default_factory=LR_MONITOR_CONF)
+    model_summary: bool = True
+    model_summary_conf: MODEL_SUMMARY_CONF = field(default_factory=MODEL_SUMMARY_CONF)

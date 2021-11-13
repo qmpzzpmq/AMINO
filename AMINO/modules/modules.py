@@ -6,7 +6,7 @@ from AMINO.utils.dynamic_import import dynamic_import
 
 def init_module(module_conf):
     try:
-        net_class = dynamic_import(module_conf['select'])
+        module_class = dynamic_import(module_conf['select'])
     except Exception as e:
         logging.warning(
             f"""
@@ -16,7 +16,7 @@ def init_module(module_conf):
         )
         sys.exit(1)
     try:
-        net = net_class(**module_conf['conf'])
+        module = module_class(**module_conf['conf'])
     except Exception as e:
         logging.warning(
             f"""
@@ -26,4 +26,4 @@ def init_module(module_conf):
             """
         )
         sys.exit(2)
-    return net
+    return module

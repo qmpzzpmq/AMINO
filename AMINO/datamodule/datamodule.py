@@ -86,10 +86,13 @@ class AMINODataModule(pl.LightningDataModule):
         else:
             return None
 
-    def on_before_batch_transfer(self, batch, dataloader_idx):
-        if type(self.trainer.accelerator) == pl.accelerators.cpu.CPUAccelerator:
-            batch = self.on_after_batch_transfer(batch, dataloader_idx)
-        return batch
+    # this bug fix: when pytorch_lightning > 1.5
+    # def on_before_batch_transfer(self, batch, dataloader_idx):
+    #     if type(self.trainer.accelerator) == pl.accelerators.cpu.CPUAccelerator:
+    #         print("0")
+    #         return self.on_after_batch_transfer(batch, dataloader_idx)
+    #     print(f"1. accelerator: {type(self.trainer.accelerator)}")
+    #     return batch
 
     def on_after_batch_transfer(self, batch, dataloader_idx):
         if self.trainer.training \
@@ -121,7 +124,6 @@ class AMINODataModule(pl.LightningDataModule):
             )
         else:
             return None
-
 
     def tesrdown(self):
         super().teardown()
