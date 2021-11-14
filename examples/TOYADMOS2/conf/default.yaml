@@ -97,20 +97,15 @@ callbacks:
   conf:
     max_depth: 3
 loggers:
-  tensorboard: false
-  tensorboard_conf:
+- select: pytorch_lightning.loggers:TensorBoardLogger
+  conf:
     save_dir: ${expbase.tensorboard}/${hydra:job.name}
-  wandb: false
-  wandb_conf:
+- select: pytorch_lightning.loggers.wandb:WandbLogger
+  conf:
     name: ${hydra:job.name}
     save_dir: null
     project: AMINO
     log_model: false
-  neptune: false
-  neptune_conf:
-    project_name: ${expbase.neptune}
-    experiment_name: ${hydra:job.name}
-    api_token: ANONYMOUS
 logging:
   level: DEBUG
 trainer:

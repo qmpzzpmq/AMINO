@@ -94,13 +94,6 @@ trainer:
   auto_scale_batch_size: null
   log_every_n_steps: 1
 
-# callbacks:
-#   earlystopping_conf:
-#     patience: 50
-
-loggers:
-  tensorboard: true
-  wandb: true
 
 hydra:
   run:

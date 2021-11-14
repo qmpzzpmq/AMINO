@@ -87,7 +87,23 @@ class TRAIN_CONFIG():
             },
         ),
     ])
-    loggers: LOGGERS = field(default_factory=LOGGERS)
+    loggers: Union[List[AMINO_CONF], None] = field(default_factory=lambda: [
+        AMINO_CONF(
+            select="pytorch_lightning.loggers:TensorBoardLogger",
+            conf={
+                "save_dir": '${expbase.tensorboard}/${hydra:job.name}',
+            },
+        ),
+        AMINO_CONF(
+            select="pytorch_lightning.loggers.wandb:WandbLogger",
+            conf={
+                "name": '${hydra:job.name}',
+                "save_dir": None,
+                "project": "AMINO",
+                "log_model": False,
+            },
+        ),
+    ])
     logging: LOGGING = field(default_factory=LOGGING)
     trainer: TRAINER = field(default_factory=TRAINER)
     variables: Any = None
