@@ -1,5 +1,5 @@
 from abc import ABC
-from typing import Any, Dict, Union
+from typing import Any, Dict, Union, List
 
 from omegaconf import OmegaConf
 from dataclasses import dataclass, MISSING, field
@@ -7,7 +7,6 @@ from undictify import type_checked_constructor
 
 from AMINO.configs.datamodule import DATAMODULE
 from AMINO.configs.module import MODULE_CONF
-from AMINO.configs.callbacks import CALLBACKS
 from AMINO.configs.loggers import LOGGERS
 from AMINO.configs.trainer import TRAINER
 from AMINO.configs.common import AMINO_CONF
@@ -41,7 +40,53 @@ class TRAIN_CONFIG():
         conf=OmegaConf.structured(MODULE_CONF),
     )
     expbase: EXP_BASE = field(default_factory=EXP_BASE)
-    callbacks: CALLBACKS = field(default_factory=CALLBACKS)
+    callbacks: Union[List[AMINO_CONF], None] = field(default_factory=lambda: [
+        AMINO_CONF(
+            select="pytorch_lightning.callbacks.progress:ProgressBar",
+            conf={
+                "refresh_rate": 1,
+                "process_position": 0,
+            },
+        ),
+        AMINO_CONF(
+            select="pytorch_lightning.callbacks.model_checkpoint:ModelCheckpoint",
+            conf={
+                "filename": 'epoch{epoch}-val_normal_loss{val_normal_loss:.3f}',
+                "monitor":  'val_normal_loss_epoch',
+                "save_last": True,
+                "save_top_k": 5,
+                "dirpath": 'checkpoint',
+            },
+        ),
+        AMINO_CONF(
+            select="pytorch_lightning.callbacks.early_stopping:EarlyStopping",
+            conf={
+                "monitor": 'val_normal_loss_epoch',
+                "mode": 'min',
+                "min_delta": 1e-6,
+                "patience": 5,
+            },
+        ),
+        AMINO_CONF(
+            select="pytorch_lightning.callbacks.gpu_stats_monitor:GPUStatsMonitor",
+            conf={
+                "memory_utilization": True,
+                "gpu_utilization": True,
+            },
+        ),
+        AMINO_CONF(
+            select="pytorch_lightning.callbacks.lr_monitor:LearningRateMonitor",
+            conf={
+                "logging_interval": 'epoch',
+            },
+        ),
+        AMINO_CONF(
+            select="pytorch_lightning.callbacks:ModelSummary",
+            conf={
+                "max_depth": 3,
+            },
+        ),
+    ])
     loggers: LOGGERS = field(default_factory=LOGGERS)
     logging: LOGGING = field(default_factory=LOGGING)
     trainer: TRAINER = field(default_factory=TRAINER)

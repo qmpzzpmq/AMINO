@@ -12,12 +12,13 @@
 
 # C. Enhancement
 1. some `eval` function should be replace by dynamic_import. # FIX!!! except scheduler
-2. on-the-fly data-augment like specaug and speed should be added into preprocess
-3. more feature should be support
+2. on-the-fly data-augment like specaug and speed should be added into preprocess # FIX
+3. more feature should be support 
 4. more net should be support
+5. rebuild callback and loggers with dynamic import
 
 # D. Performance
-1. the anormal loss lower than normal # FIX ！！！
+1. the anormal loss lower than normal 
 
 # E. Note
 This file might overrides through https://marketplace.visualstudio.com/items?itemName=wayou.vscode-todo-highlight

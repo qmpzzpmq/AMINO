@@ -13,6 +13,9 @@ datamodule:
       - select: "AMINO.datamodule.datasets:TOYADMOS2_DATASET"
         conf:
           path: ${variables.datasource1}/${variables.task}/train
+      # - select: "AMINO.datamodule.datasets:TOYADMOS2_DATASET"
+      #   conf:
+      #     path: ${variables.datasource1}/${variables.task}/source_test
     val:
       - select: "AMINO.datamodule.datasets:TOYADMOS2_DATASET"
         conf:
@@ -91,10 +94,9 @@ trainer:
   auto_scale_batch_size: null
   log_every_n_steps: 1
 
-callbacks:
-  earlystopping_conf:
-    patience: 5
-  
+# callbacks:
+#   earlystopping_conf:
+#     patience: 50
 
 loggers:
   tensorboard: true

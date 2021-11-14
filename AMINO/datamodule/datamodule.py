@@ -5,7 +5,7 @@ import pytorch_lightning as pl
 
 from AMINO.datamodule.datasets import init_datasets
 from AMINO.datamodule.preprocess import init_preporcesses
-from AMINO.utils.datamodule import MulPadCollate, AMINOPadCollate
+from AMINO.utils.datamodule import AMINOPadCollate
 
 class AMINODataModule(pl.LightningDataModule):
     def __init__(self, datamodule_conf):

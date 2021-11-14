@@ -40,11 +40,11 @@ class LR_MONITOR_CONF(ABC):
 @type_checked_constructor()
 @dataclass
 class MODEL_SUMMARY_CONF(ABC):
-    max_depth: int = 2
+    max_depth: int = 3
 
 @type_checked_constructor()
 @dataclass
-class CALLBACKS(ABC):
+class PRE_CALLBACKS(ABC):
     progressbar: bool = True
     progressbar_conf: PROGRESSBAR_CONF = field(default_factory=PROGRESSBAR_CONF)
     modelcheckpoint: bool = True

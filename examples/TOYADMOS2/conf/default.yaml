@@ -69,33 +69,33 @@ expbase:
   neptune: neptune
   seed: 777
 callbacks:
-  progressbar: true
-  progressbar_conf:
+- select: pytorch_lightning.callbacks.progress:ProgressBar
+  conf:
     refresh_rate: 1
     process_position: 0
-  modelcheckpoint: true
-  modelcheckpoint_conf:
+- select: pytorch_lightning.callbacks.model_checkpoint:ModelCheckpoint
+  conf:
     filename: epoch{epoch}-val_normal_loss{val_normal_loss:.3f}
     monitor: val_normal_loss_epoch
     save_last: true
     save_top_k: 5
     dirpath: checkpoint
-  earlystopping: true
-  earlystopping_conf:
+- select: pytorch_lightning.callbacks.early_stopping:EarlyStopping
+  conf:
     monitor: val_normal_loss_epoch
     mode: min
     min_delta: 1.0e-06
     patience: 5
-  gpu_stats: true
-  gpu_stats_conf:
+- select: pytorch_lightning.callbacks.gpu_stats_monitor:GPUStatsMonitor
+  conf:
     memory_utilization: true
     gpu_utilization: true
-  lr_monitor: true
-  lr_monitor_conf:
+- select: pytorch_lightning.callbacks.lr_monitor:LearningRateMonitor
+  conf:
     logging_interval: epoch
-  model_summary: true
-  model_summary_conf:
-    max_depth: 2
+- select: pytorch_lightning.callbacks:ModelSummary
+  conf:
+    max_depth: 3
 loggers:
   tensorboard: false
   tensorboard_conf:
