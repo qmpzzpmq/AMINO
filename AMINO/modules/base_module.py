@@ -18,13 +18,15 @@ def data_seperation(batch, seperation_dim=0):
     for key, flag in zip(["normal", "anomaly"], [True, False]):
         idx = (label==flag).nonzero(as_tuple=True)[0]
         if idx.size(0) > 0:
-            feature = torch.index_select(
+            temp_feature = torch.index_select(
                 feature, seperation_dim, idx
             )
-            feature_len = torch.index_select(
+            temp_feature_len = torch.index_select(
                 feature_len, seperation_dim, idx
             )
-            out_dict[key] = {"data": feature, "len": feature_len}
+            out_dict[key] = {
+                "data": temp_feature, "len": temp_feature_len
+            }
     return out_dict
 
 class AMINO_MODULE(pl.LightningModule):

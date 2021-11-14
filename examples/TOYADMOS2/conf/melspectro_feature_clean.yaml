@@ -73,6 +73,7 @@ module:
   select: "AMINO.modules.autoencoder:AMINO_AUTOENCODER"
   conf:
     net_conf:
+      select: "AMINO.modules.nets.autoencoder:simple_autoencoder"
       conf:
         feature_dim: "${product: ${variables.n_mels}, ${variables.feature_unfold}}"
         hidden_dims:
@@ -93,6 +94,7 @@ trainer:
 callbacks:
   earlystopping_conf:
     patience: 5
+  
 
 loggers:
   tensorboard: true

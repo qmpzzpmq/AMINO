@@ -86,7 +86,7 @@ class TOYADMOS2_DATASET(tdata.Dataset):
         self.file_list = normal_files + anormal_files
         self.label = torch.cat([
             torch.full([len(normal_files)], True, dtype=torch.bool),
-            torch.full([len(anormal_files)], True, dtype=torch.bool),
+            torch.full([len(anormal_files)], False, dtype=torch.bool),
         ], dim=0)
         self.fs = fs
         if mono_channel == "mean":
