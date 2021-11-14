@@ -5,7 +5,7 @@ import pytorch_lightning as pl
 
 from AMINO.datamodule.datasets import init_datasets
 from AMINO.datamodule.preprocess import init_preporcesses
-from AMINO.utils.datamodule import MulPadCollate, SinglePadCollate
+from AMINO.utils.datamodule import MulPadCollate, AMINOPadCollate
 
 class AMINODataModule(pl.LightningDataModule):
     def __init__(self, datamodule_conf):
@@ -54,7 +54,7 @@ class AMINODataModule(pl.LightningDataModule):
                         self.datasets[key].set_preprocesses(
                             precrocesses.get(key, None)
                         )
-                    self.collect_fns[key] = MulPadCollate([True, False], dim=-1)
+                    self.collect_fns[key] = AMINOPadCollate()
 
     def train_dataloader(self):
         if self.datasets['train'] is not None:
@@ -112,7 +112,9 @@ class AMINODataModule(pl.LightningDataModule):
     def batch_transform(self, position, key, batch):
         if not self.transform2device[position][key]:
             self.transform[position][key] = \
-                self.transform[position][key].to(batch[0][0].device)
+                self.transform[position][key].to(
+                    batch['feature']['data'].device
+                )
         batch = self.transform[position][key](batch)
         return batch
 

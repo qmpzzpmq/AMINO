@@ -9,8 +9,10 @@ class AMINO_AUTOENCODER(AMINO_MODULE):
         return loss
 
     def training_step(self, batch, batch_idx):
-        feature, label, datas_len = self.data_extract(batch)
-        loss = self.batch2loss(feature, datas_len[0])
+        seperated_batch = self.data_seperation(batch)
+        feature = seperated_batch['normal']['data']
+        feature_len = seperated_batch['normal']['len']
+        loss = self.batch2loss(feature, feature_len)
         self.log(
             'loss', loss,
             on_step=True, on_epoch=True,
@@ -19,16 +21,16 @@ class AMINO_AUTOENCODER(AMINO_MODULE):
         return {'loss': loss}
 
     def validation_step(self, batch, batch_idx):
-        features, features_len = self.data_seperation(batch)
+        seperated_batch = self.data_seperation(batch)
         losses = dict()
-        for key in features.keys():
-            loss = self.batch2loss(features[key], features_len[key])
+        for k, v in seperated_batch.items():
+            loss = self.batch2loss(v['data'], v['len'])
             self.log(
-                f"val_{key}_loss", loss,
+                f"val_{k}_loss", loss,
                 on_step=True, on_epoch=True,
                 prog_bar=True, logger=True
             )
-            losses[f"val_{key}_loss"] = loss
+            losses[f"val_{k}_loss"] = loss
         return losses
 
     def configure_optimizers(self):

@@ -78,19 +78,16 @@ class TOYADMOS2_DATASET(tdata.Dataset):
             mono_channel="mean",
             fs=16000,
             speed_perturb=[1.0, 1.1, 0.9],
-            speed_perturb_weight=[1, 1, 1]
+            speed_perturb_weight=[1, 1, 1],
     ):
         super().__init__()
         normal_files, anormal_files = file_list_generator(
             path, prefix_normal, prefix_anomaly, ext)
         self.file_list = normal_files + anormal_files
-        self.label = np.concatenate(
-            [
-                np.full([len(normal_files),], True, dtype=bool),
-                np.full([len(anormal_files),], False, dtype=bool),
-            ],
-            axis=0,
-        )
+        self.label = torch.cat([
+            torch.full([len(normal_files)], True, dtype=torch.bool),
+            torch.full([len(anormal_files)], True, dtype=torch.bool),
+        ], dim=0)
         self.fs = fs
         if mono_channel == "mean":
             self.mono_func = lambda x: torch.mean(x, dim=0).unsqueeze(0)

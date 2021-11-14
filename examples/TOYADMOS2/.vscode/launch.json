@@ -15,6 +15,7 @@
                 "--config-name", "melspectro_feature_clean.yaml",
                 "hydra.job.name=test",
                 "++variables.dataloaders_num_workers=0",
+                "++variables.batch_size=5"
                 "++trainer.profiler='simple'"
                 // "++trainer.gpus=0",
                 // "++callbacks.gpu_stats=false",
@@ -41,7 +42,6 @@
                 "hydra.job.name=data_check",
                 "++feature_statistics.set='train'",
                 "++variables.dataloaders_num_workers=10",
-                // "++datamodule.datasets.train.conf.speed_perturb='null'",
             ],
             "env": {
                 "PYTHONPATH": "../..:${PYTHONPATH}",

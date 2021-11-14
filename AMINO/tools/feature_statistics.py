@@ -35,6 +35,7 @@ def main(read_cfg) -> None:
     cfg.module.conf = {}
     cfg.trainer['strategy'] = 'ddp'
     cfg.trainer['accelerator'] = 'cpu'
+    cfg.datamodule.datasets.train.conf.speed_perturb=None
     temp_train_after_transform = []
     for i in cfg.datamodule.after_transform.train:
         if not issubclass(dynamic_import(i['select']), TrainDataAugment):

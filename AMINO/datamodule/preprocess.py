@@ -5,7 +5,6 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torchaudio
 
-from AMINO.modules.base_module import data_extract, data_pack
 from AMINO.utils.dynamic_import import dynamic_import
 
 class TrainDataAugment(nn.Module):
@@ -18,12 +17,14 @@ class Spectrogram(nn.Module):
         self.fft = torchaudio.transforms.Spectrogram(**fft_conf)
 
     def forward(self, batch):
-        feature, label, datas_len = data_extract(batch)
+        feature = batch['feature']['data']
+        feature_len = batch['feature']['len']
         feature_pwr = self.fft(feature).transpose(-1, -2)
-        datas_len[0] = (
-            (datas_len[0] - self.fft.n_fft) / self.fft.hop_length + 3
+        feature_len = (
+            (feature_len - self.fft.n_fft) / self.fft.hop_length + 3
         ).floor().to(torch.int32)
-        return data_pack(feature_pwr, label, datas_len)
+        batch['feature'] = {'data': feature_pwr, 'len': feature_len}
+        return batch
 
 class MelSpectrogram(nn.Module):
     def __init__(self, **mel_conf):
@@ -31,13 +32,14 @@ class MelSpectrogram(nn.Module):
         self.melspec = torchaudio.transforms.MelSpectrogram(**mel_conf)
 
     def forward(self, batch):
-        feature, label, datas_len = data_extract(batch)
-        assert feature.dim() == 3
+        feature = batch['feature']['data']
+        feature_len = batch['feature']['len']
         melspec = self.melspec(feature).transpose(-1, -2)
-        datas_len[0] = (
-            (datas_len[0] - self.melspec.n_fft) / self.melspec.hop_length + 3
+        feature_len = (
+            (feature_len - self.melspec.n_fft) / self.melspec.hop_length + 3
         ).floor().to(torch.int32)
-        return data_pack(melspec, label, datas_len)
+        batch['feature'] = {'data': melspec, 'len': feature_len}
+        return batch
 
 # modified from https://github.com/espnet/espnet/pull/2324
 class Feature_Unfold(nn.Module):
@@ -49,7 +51,7 @@ class Feature_Unfold(nn.Module):
         self.n_frame = n_frame
 
     def forward(self, batch):
-        feature, label, datas_len = data_extract(batch)
+        feature = batch['feature']['data']
         b, c, t, f = feature.shape
         feature = F.pad(
             feature, pad=(0, 0, self.n_frame - 1, 0), value=0.0
@@ -63,12 +65,8 @@ class Feature_Unfold(nn.Module):
         # (batch, channel, n_frame, Time, feature) ->
         # (batch, channel, Time, n_frame, feature) ->
         # (batch, channel, Time, n_frame * feature) 
-        return data_pack(
-            feature,
-            label,
-            datas_len,
-        )
-        return  # (bt,chunk_size,feautres_size)
+        batch['feature']['data'] = feature
+        return batch
 
 # should be imporve later for T for a retio of length
 class SpecAug(TrainDataAugment):
@@ -103,20 +101,21 @@ class SpecAug(TrainDataAugment):
             self.time_stretch_range = None
 
     def forward(self, batch):
-        feature_pwr, label, datas_len = data_extract(batch)
+        feature = batch['feature']['data']
         # feature_pwr: (batch, channel, time, feature)
         if self.time_stretch_range is not None:
-            feature_pwr = self.TS(
-                feature_pwr.transpose(-1, -2),
+            feature = self.TS(
+                feature.transpose(-1, -2),
                 random.uniform(*self.time_stretch_range)
             ).transpose(-1, -2)
         if self.FM is not None:
             for _ in range(self.num_mask['frequency']):
-                feature_pwr = self.FM(feature_pwr)
+                feature = self.FM(feature)
         if self.TM is not None:
             for _ in range(self.num_mask['time']):
-                feature_pwr = self.TM(feature_pwr)
-        return data_pack(feature_pwr, label, datas_len)
+                feature = self.TM(feature)
+        batch['feature']['data'] = feature
+        return batch
 
 def init_preporcesses(preprocesses_conf):
     if preprocesses_conf is not None:
