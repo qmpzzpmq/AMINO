@@ -64,7 +64,7 @@ class TRAIN_CONFIG():
                 "monitor": 'val_normal_loss_epoch',
                 "mode": 'min',
                 "min_delta": 1e-6,
-                "patience": 5,
+                "patience": 30,
             },
         ),
         AMINO_CONF(
