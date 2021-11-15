@@ -31,9 +31,6 @@ datamodule:
         time_mask:
           T: 40
           num_mask: 2
-        time_streatch:
-          floor: 0.9
-          ceil: 1.1
     val:
     - select: AMINO.datamodule.preprocess:Spectrogram
       conf:
@@ -52,13 +49,13 @@ module:
     optim_conf:
       select: torch.optim:Adam
       conf:
-        lr: 0.001
+        lr: 0.01
       contiguous_params: false
     scheduler_conf:
-      select: lambdalr
+      select: torch.optim.lr_scheduler:StepLR
       conf:
-        last_epoch: -1
-        lr_lambda: 'lambda epoch: 0.95 ** epoch'
+        step_size: 5
+        gamma: 0.1
     net_conf:
       select: AMINO.modules.nets.autoencoder:simple_autoencoder
       conf: {}
@@ -69,7 +66,7 @@ expbase:
   neptune: neptune
   seed: 777
 callbacks:
-- select: pytorch_lightning.callbacks.progress:ProgressBar
+- select: pytorch_lightning.callbacks.progress.tqdm_progress:TQDMProgressBar
   conf:
     refresh_rate: 1
     process_position: 0
@@ -85,11 +82,9 @@ callbacks:
     monitor: val_normal_loss_epoch
     mode: min
     min_delta: 1.0e-06
-    patience: 5
-- select: pytorch_lightning.callbacks.gpu_stats_monitor:GPUStatsMonitor
-  conf:
-    memory_utilization: true
-    gpu_utilization: true
+    patience: 30
+- select: pytorch_lightning.callbacks:DeviceStatsMonitor
+  conf: {}
 - select: pytorch_lightning.callbacks.lr_monitor:LearningRateMonitor
   conf:
     logging_interval: epoch

@@ -17,7 +17,7 @@
                 "++variables.dataloaders_num_workers=0",
                 "++variables.batch_size=5",
                 "++trainer.profiler='simple'",
-                "++trainer.gpus=0",
+                // "++trainer.gpus=[0]",
                 // "++trainer.gpus=0",
                 // "++callbacks.gpu_stats=false",
                 // "hydra/job_logging=disabled",

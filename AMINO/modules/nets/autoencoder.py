@@ -52,8 +52,8 @@ class simple_autoencoder(nn.Module):
         for i in range(num_layer):
             layers[f'dropout{i}'] = nn.Dropout(p=enc_drop_out, inplace=False)
             layers[f'linear{i}'] = nn.Linear(hidden_dims[i], hidden_dims[i+1])
-            # layers[f'norm{i}'] = nn.BatchNorm2d(1)
-            layers[f'norm{i}'] = AUDIO_NORM(hidden_dims[i+1])
+            layers[f'norm{i}'] = nn.BatchNorm2d(1)
+            # layers[f'norm{i}'] = AUDIO_NORM(hidden_dims[i+1])
             layers[f'activation{i}'] = nn.ReLU(inplace=True)
         self.enc = nn.Sequential(layers)
         layers = OrderedDict()
@@ -61,8 +61,8 @@ class simple_autoencoder(nn.Module):
             layers[f'dropout{i}'] = nn.Dropout(p=dec_drop_out, inplace=False)
             layers[f'linear{i}'] = nn.Linear(hidden_dims[num_layer-i], hidden_dims[num_layer-i-1])
             if i != (num_layer - 1):
-                # layers[f'norm{i}'] = nn.BatchNorm2d(1)
-                layers[f'norm{i}'] = AUDIO_NORM(hidden_dims[num_layer-i-1])
+                layers[f'norm{i}'] = nn.BatchNorm2d(1)
+                # layers[f'norm{i}'] = AUDIO_NORM(hidden_dims[num_layer-i-1])
                 layers[f'activation{i}'] = nn.ReLU(inplace=True)
         self.dec = nn.Sequential(layers)
         if load_from_h5 is not None:

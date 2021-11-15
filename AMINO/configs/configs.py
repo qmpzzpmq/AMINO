@@ -7,7 +7,6 @@ from undictify import type_checked_constructor
 
 from AMINO.configs.datamodule import DATAMODULE
 from AMINO.configs.module import MODULE_CONF
-from AMINO.configs.loggers import LOGGERS
 from AMINO.configs.trainer import TRAINER
 from AMINO.configs.common import AMINO_CONF
 
@@ -42,7 +41,7 @@ class TRAIN_CONFIG():
     expbase: EXP_BASE = field(default_factory=EXP_BASE)
     callbacks: Union[List[AMINO_CONF], None] = field(default_factory=lambda: [
         AMINO_CONF(
-            select="pytorch_lightning.callbacks.progress:ProgressBar",
+            select="pytorch_lightning.callbacks.progress.tqdm_progress:TQDMProgressBar",
             conf={
                 "refresh_rate": 1,
                 "process_position": 0,
@@ -68,11 +67,7 @@ class TRAIN_CONFIG():
             },
         ),
         AMINO_CONF(
-            select="pytorch_lightning.callbacks.gpu_stats_monitor:GPUStatsMonitor",
-            conf={
-                "memory_utilization": True,
-                "gpu_utilization": True,
-            },
+            select="pytorch_lightning.callbacks:DeviceStatsMonitor",
         ),
         AMINO_CONF(
             select="pytorch_lightning.callbacks.lr_monitor:LearningRateMonitor",

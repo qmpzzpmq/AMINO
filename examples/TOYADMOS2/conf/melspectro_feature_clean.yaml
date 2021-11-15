@@ -76,17 +76,16 @@ module:
   select: "AMINO.modules.autoencoder:AMINO_AUTOENCODER"
   conf:
     net_conf:
-      select: "AMINO.modules.nets.autoencoder:simple_autoencoder"
-      conf:
-        feature_dim: "${product: ${variables.n_mels}, ${variables.feature_unfold}}"
-        hidden_dims:
-          - 128 
-          - 128
-          - 128
-          - 128
-          - 8
-        # cmvn_path: "feature_statistics.pt"
-        # load_from_h5: "pretrain_module/model_ToyTrain.hdf5"
+      select: "AMINO.modules.nets.conv_autoencoder:test_conv"
+    #   select: "AMINO.modules.nets.autoencoder:simple_autoencoder"
+    #   conf:
+    #     feature_dim: "${product: ${variables.n_mels}, ${variables.feature_unfold}}"
+    #     hidden_dims:
+    #       - 128 
+    #       - 32
+    #       - 8
+    #     # cmvn_path: "feature_statistics.pt"
+    #     # load_from_h5: "pretrain_module/model_ToyTrain.hdf5"
 
 trainer:
   gpus: 
