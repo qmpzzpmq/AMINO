@@ -64,10 +64,10 @@ class DATAMODULE(ABC):
                         "T": 40,
                         "num_mask": 2,
                     },
-                    "time_streatch": {
-                        "floor": 0.9,
-                        "ceil": 1.1
-                    }
+                    # "time_stretch": {
+                    #     "floor": 0.9,
+                    #     "ceil": 1.1
+                    # },
                 }
             ),
         ],
