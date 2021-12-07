@@ -1,0 +1,72 @@
+{
+    // 使用 IntelliSense 了解相关属性。 
+    // 悬停以查看现有属性的描述。
+    // 欲了解更多信息，请访问: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "test train",
+            "type": "python",
+            "request": "launch",
+            "program": "AMINO/bin/train.py",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "args": [
+                "--config-name", "melspectro_feature_clean.yaml",
+                "hydra.job.name=test",
+                "++variables.dataloaders_num_workers=0",
+                "++variables.batch_size=5",
+                "++trainer.profiler='simple'",
+                // "++trainer.gpus=[0]",
+                // "++trainer.gpus=0",
+                // "++callbacks.gpu_stats=false",
+                // "hydra/job_logging=disabled",
+                // "hydra/hydra_logging=disabled",
+                // “hydra.run.dir=.”,
+                // “hydra.output_subdir=null“,
+            ],
+            "env": {
+                "PYTHONPATH": "../..:${PYTHONPATH}",
+                "OC_CAUSE": "1",
+                "HYDRA_FULL_ERROR": "1"
+            }
+        },
+        {
+            "name": "feature_check",
+            "type": "python",
+            "request": "launch",
+            "program": "AMINO/tools/feature_statistics.py",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "args": [
+                "--config-name", "melspectro_feature_clean.yaml",
+                "hydra.job.name=data_check",
+                "++feature_statistics.set='train'",
+                "++variables.dataloaders_num_workers=10",
+            ],
+            "env": {
+                "PYTHONPATH": "../..:${PYTHONPATH}",
+                "OC_CAUSE": "1",
+                "HYDRA_FULL_ERROR": "1"
+            }
+        },
+        {
+            "name": "train",
+            "type": "python",
+            "request": "launch",
+            "program": "AMINO/bin/train.py",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "args": [
+                "--config-name", "melspectrogram_feature_combine.yaml",
+                "hydra.job.name=charlie_lr0.05",
+                "++module.conf.optim_conf.conf.lr=0.05",
+            ],
+            "env": {
+                "PYTHONPATH": "../..:${PYTHONPATH}",
+                "OC_CAUSE": "1",
+                "HYDRA_FULL_ERROR": "1"
+            }
+        },
+    ]
+}

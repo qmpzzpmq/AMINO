@@ -1,0 +1,89 @@
+variables:
+  datasource1: "/haoyu/data/dcase2020_task2/train"
+  task: "ToyCar" # "ToyTrain" "ToyCar"
+  nfft: 1024
+  batch_size: 256
+  dataloaders_num_workers: 5
+  n_mels: 128
+  feature_unfold: 5
+
+datamodule:
+  datasets:
+    train:
+      - select: "AMINO.datamodule.datasets:ADMOS_DATASET"
+        conf:
+          path: ${variables.datasource1}/${variables.task}/train
+          format: "dcase2020_task2"
+    val:
+      - select: "AMINO.datamodule.datasets:ADMOS_DATASET"
+        conf:
+          path: ${variables.datasource1}/${variables.task}/test
+          format: "dcase2020_task2"
+    test: 
+      -  null
+  after_transform:
+    train:
+      - select: "AMINO.datamodule.preprocess:MelSpectrogram"
+        conf:
+          n_fft: ${variables.nfft}
+          n_mels: ${variables.n_mels}
+      - select: "AMINO.datamodule.preprocess:Feature_Unfold"
+        conf:
+          n_frame: ${variables.feature_unfold}
+      - select: "AMINO.datamodule.preprocess:SpecAug"
+        conf:
+          frequency_mask:
+            F: 30
+            num_mask: 2
+          time_mask:
+            T: 30
+            num_mask: 2
+          time_streatch:
+            floor: 0.9
+            ceil: 1.1
+    val:
+      - select: "AMINO.datamodule.preprocess:MelSpectrogram"
+        conf:
+          n_fft: ${variables.nfft}
+          n_mels: ${variables.n_mels}
+      - select: "AMINO.datamodule.preprocess:Feature_Unfold"
+        conf:
+          n_frame: ${variables.feature_unfold}
+    test:
+      - select: "AMINO.datamodule.preprocess:MelSpectrogram"
+        conf:
+          n_fft: ${variables.nfft}
+          n_mels: ${variables.n_mels}
+      - select: "AMINO.datamodule.preprocess:Feature_Unfold"
+        conf:
+          n_frame: ${variables.feature_unfold}
+  dataloaders:
+    train:
+      # auto_scale_batch_size 'power' in V100 16G: 1516. might to large
+      batch_size: ${variables.batch_size}
+      num_workers: ${variables.dataloaders_num_workers}
+    val:
+      batch_size: ${variables.batch_size}
+      num_workers: ${variables.dataloaders_num_workers}
+
+module:
+  select: "AMINO.modules.autoencoder:AMINO_AUTOENCODER"
+  conf:
+    net_conf:
+      select: "AMINO.modules.nets.autoencoder:simple_autoencoder"
+      conf:
+        feature_dim: "${product: ${variables.n_mels}, ${variables.feature_unfold}}"
+        hidden_dims:
+          - 128 
+          - 32
+          - 8
+trainer:
+  gpus: 
+    - 0
+  auto_scale_batch_size: null
+  log_every_n_steps: 1
+
+
+hydra:
+  run:
+    dir: exp/${now:%Y-%m-%d}/${now:%H-%M-%S}

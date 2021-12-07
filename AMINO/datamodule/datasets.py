@@ -44,7 +44,7 @@ def _load_wav_with_speed(wav_file, speed):
                 [['speed', str(speed)], ['rate', str(sample_rate)]])
     return wav, sr
 
-def file_list_generator(
+def toyadmos2_file_list_generator(
         path,
         prefix_normal="normal",
         prefix_anormal="anomaly",
@@ -63,12 +63,35 @@ def file_list_generator(
         )
     return files_list
 
+def dcase2020_task2_file_list_generator(
+        path,
+        prefix_normal="normal",
+        prefix_anormal="anomaly",
+        ext="wav",
+    ):
+    files_list = []
+    for prefix in [prefix_normal, prefix_anormal]:
+        files_list.append(
+            glob.glob(
+                "{path}/{prefix}_*.{ext}".format(
+                    path=path,
+                    prefix=prefix,
+                    ext=ext,
+                )
+            )
+        )
+    return files_list
+
+class AMINO_DATASET(tdata.Dataset):
+    def set_preprocesses(self, preprocesses_func):
+        self.preprocess_func = preprocesses_func
+
 class AMINO_ConcatDataset(torch.utils.data.ConcatDataset):
     def set_preprocesses(self, preprocesses_func):
         for i in range(len(self.datasets)):
             self.datasets[i].preprocess_func = preprocesses_func
 
-class TOYADMOS2_DATASET(tdata.Dataset):
+class ADMOS_DATASET(AMINO_DATASET):
     def __init__(
             self,
             path,
@@ -79,10 +102,19 @@ class TOYADMOS2_DATASET(tdata.Dataset):
             fs=16000,
             speed_perturb=[1.0, 1.1, 0.9],
             speed_perturb_weight=[1, 1, 1],
+            format="ToyADMOS2",
     ):
         super().__init__()
-        normal_files, anormal_files = file_list_generator(
-            path, prefix_normal, prefix_anomaly, ext)
+        if format == "ToyADMOS2":
+            normal_files, anormal_files = toyadmos2_file_list_generator(
+                path, prefix_normal, prefix_anomaly, ext
+            )
+        elif format == "dcase2020_task2":
+            normal_files, anormal_files = dcase2020_task2_file_list_generator(
+                path, prefix_normal, prefix_anomaly, ext
+            )
+        else:
+            raise NotImplementedError(f"{format} not support")
         self.file_list = normal_files + anormal_files
         self.label = torch.cat([
             torch.full([len(normal_files)], True, dtype=torch.bool),
@@ -100,9 +132,6 @@ class TOYADMOS2_DATASET(tdata.Dataset):
         self.speed_perturb = speed_perturb
         self.speed_perturb_weight = speed_perturb_weight
         self.preprocess_func = None
-
-    def set_preprocesses(self, preprocesses_func):
-        self.preprocess_func = preprocesses_func
 
     def __len__(self):
         return len(self.file_list)

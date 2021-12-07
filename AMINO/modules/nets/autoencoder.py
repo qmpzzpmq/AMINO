@@ -20,7 +20,6 @@ class AUDIO_NORM(nn.BatchNorm2d):
             self, x.transpose(1, 3),
         ).transpose(1, 3)
 
-
 class simple_autoencoder(nn.Module):
     def __init__(
         self,
