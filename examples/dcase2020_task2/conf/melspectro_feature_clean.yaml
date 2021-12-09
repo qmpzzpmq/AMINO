@@ -1,6 +1,7 @@
 variables:
-  datasource1: "/haoyu/data/dcase2020_task2/train"
-  task: "ToyCar" # "ToyTrain" "ToyCar"
+  datasource: "/haoyu/data/dcase2020_task2/train"
+  task_main: "ToyCar" # "ToyTrain" "ToyCar"
+  task_aux1: "ToyConveyor"
   nfft: 1024
   batch_size: 256
   dataloaders_num_workers: 5
@@ -12,12 +13,16 @@ datamodule:
     train:
       - select: "AMINO.datamodule.datasets:ADMOS_DATASET"
         conf:
-          path: ${variables.datasource1}/${variables.task}/train
+          path: ${variables.datasource}/${variables.task_main}/train
+          format: "dcase2020_task2"
+      - select: "AMINO.datamodule.datasets:ADMOS_DATASET"
+        conf:
+          path: ${variables.datasource}/${variables.task_aux1}/train
           format: "dcase2020_task2"
     val:
       - select: "AMINO.datamodule.datasets:ADMOS_DATASET"
         conf:
-          path: ${variables.datasource1}/${variables.task}/test
+          path: ${variables.datasource}/${variables.task_main}/test
           format: "dcase2020_task2"
     test: 
       -  null
@@ -65,6 +70,7 @@ datamodule:
     val:
       batch_size: ${variables.batch_size}
       num_workers: ${variables.dataloaders_num_workers}
+      shuffle: false
 
 module:
   select: "AMINO.modules.autoencoder:AMINO_AUTOENCODER"

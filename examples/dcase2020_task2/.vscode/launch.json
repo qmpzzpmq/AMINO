@@ -13,7 +13,7 @@
             "justMyCode": true,
             "args": [
                 "--config-name", "melspectro_feature_clean.yaml",
-                "hydra.job.name=test",
+                "hydra.job.name=data_check",
                 "++variables.dataloaders_num_workers=0",
                 "++variables.batch_size=5",
                 "++trainer.profiler='simple'",
@@ -43,24 +43,6 @@
                 "hydra.job.name=data_check",
                 "++feature_statistics.set='train'",
                 "++variables.dataloaders_num_workers=10",
-            ],
-            "env": {
-                "PYTHONPATH": "../..:${PYTHONPATH}",
-                "OC_CAUSE": "1",
-                "HYDRA_FULL_ERROR": "1"
-            }
-        },
-        {
-            "name": "train",
-            "type": "python",
-            "request": "launch",
-            "program": "AMINO/bin/train.py",
-            "console": "integratedTerminal",
-            "justMyCode": true,
-            "args": [
-                "--config-name", "melspectrogram_feature_combine.yaml",
-                "hydra.job.name=charlie_lr0.05",
-                "++module.conf.optim_conf.conf.lr=0.05",
             ],
             "env": {
                 "PYTHONPATH": "../..:${PYTHONPATH}",

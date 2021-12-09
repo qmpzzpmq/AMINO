@@ -12,24 +12,24 @@ variables:
 datamodule:
   datasets:
     train:
-      - select: "AMINO.datamodule.datasets:TOYADMOS2_DATASET"
+      - select: "AMINO.datamodule.datasets:ADMOS_DATASET"
         conf:
           path: ${variables.datasource1}/${variables.task}/train
-      - select: "AMINO.datamodule.datasets:TOYADMOS2_DATASET"
+      - select: "AMINO.datamodule.datasets:ADMOS_DATASET"
         conf:
           path: ${variables.datasource2}/${variables.task}/train
-      - select: "AMINO.datamodule.datasets:TOYADMOS2_DATASET"
+      - select: "AMINO.datamodule.datasets:ADMOS_DATASET"
         conf:
           path: ${variables.datasource3}/${variables.task}/train
     val:
-      - select: "AMINO.datamodule.datasets:TOYADMOS2_DATASET"
+      - select: "AMINO.datamodule.datasets:ADMOS_DATASET"
         conf:
           path: ${variables.datasource1}/${variables.task}/source_test
           # path: ${variables.target_dir}/${variables.task}/target_test
     test: 
       - null
     # test: 
-    #   select: "AMINO.datamodule.datasets:TOYADMOS2_DATASET"
+    #   select: "AMINO.datamodule.datasets:ADMOS_DATASET"
     #   conf:
     #     path: ${variables.target_dir}/${variables.task}/target_test
   after_transform:

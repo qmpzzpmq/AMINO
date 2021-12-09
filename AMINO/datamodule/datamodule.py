@@ -47,14 +47,15 @@ class AMINODataModule(pl.LightningDataModule):
         for key, value in self.datamodule_conf['single_preprocesses'].items():
             if key in key_selects:
                 precrocesses[key] = init_preporcesses(value)
-            for key, value in self.datamodule_conf['datasets'].items():
-                if key in key_selects:
-                    self.datasets[key] = init_datasets(value)
-                    if self.datasets[key] is not None:
-                        self.datasets[key].set_preprocesses(
-                            precrocesses.get(key, None)
-                        )
-                    self.collect_fns[key] = AMINOPadCollate()
+        for key, value in self.datamodule_conf['datasets'].items():
+            if key in key_selects:
+                self.datasets[key] = init_datasets(value)
+                if self.datasets[key] is not None:
+                    logging.info(f"the {key} dataset len: {len(self.datasets[key])}")
+                    self.datasets[key].set_preprocesses(
+                        precrocesses.get(key, None)
+                    )
+                self.collect_fns[key] = AMINOPadCollate()
 
     def train_dataloader(self):
         if self.datasets['train'] is not None:
