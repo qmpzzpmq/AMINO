@@ -45,7 +45,7 @@ def main(read_cfg) -> None:
         else:
             cfg['pipeline_size']['num_classes'] = num_classes
     module = init_object(cfg['module'])
-    module.summarize(mode="full")
+    module.summarize(max_depth=-1)
     trainer = pl.Trainer(
         callbacks=callbacks,
         logger=loggers,
@@ -60,9 +60,6 @@ def main(read_cfg) -> None:
         result = trainer.tune(
             module,
             datamodule=datamodule,
-            # scale_batch_size_kwargs={
-            #     "batch_arg_name": "datamodule_conf.dataloaders.train.batch_size",
-            # },
         )
         del datamodule.batch_size
         datamodule.datamodule_conf.dataloaders.train['batch_size'] = result["scale_batch_size"]

@@ -1,5 +1,3 @@
-import torch
-
 from AMINO.utils.dynamic_import import dynamic_import
 
 def init_scheduler(optim, scheduler_conf):

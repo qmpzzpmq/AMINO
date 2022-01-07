@@ -7,7 +7,7 @@
             "request": "launch",
             "program": "AMINO/bin/train.py",
             "console": "integratedTerminal",
-            "justMyCode": false,
+            "justMyCode": true,
             "args": [
                 "--config-name", "mel_classifier.yaml",
                 "hydra.job.name=test"
