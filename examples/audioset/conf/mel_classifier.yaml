@@ -11,7 +11,8 @@ pipeline_size:
   num_classes: ???
 
 defaults:
-  - override hydra/job_logging: custom
+  - override hydra/job_logging: AMINO_default
+  - override hydra/output: AMINO_default
 
 datamodule:
   datasets:

@@ -6,6 +6,8 @@ import torch.nn as nn
 import pytorch_lightning as pl
 
 from AMINO.utils.init_object import init_object
+from AMINO.modules.optim import init_optim
+from AMINO.modules.scheduler import init_scheduler
 
 
 def data_seperation(batch, seperation_dim=0):
@@ -39,9 +41,9 @@ class AMINO_MODULE(pl.LightningModule):
         if loss:
             self.loss = init_object(loss)
         if optim:
-            self.optim = init_object(self.net, optim)
+            self.optim = init_optim(self.net, optim)
             if scheduler:
-                self.scheduler = init_object(self.optim, scheduler)
+                self.scheduler = init_scheduler(self.optim, scheduler)
         self.save_hyperparameters()
 
     def configure_optimizers(self):
