@@ -1,0 +1,5 @@
+./bin/*.pyc
+./datamodule/*.pyc
+./module/*.pyc
+./tools/*.pyc
+./utils/*.pyc

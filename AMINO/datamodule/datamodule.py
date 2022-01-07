@@ -1,11 +1,13 @@
 import logging
 
+import torch
 import torch.utils.data as tdata
 import pytorch_lightning as pl
 
-from AMINO.datamodule.datasets import init_datasets
 from AMINO.datamodule.preprocess import init_preporcesses
 from AMINO.utils.datamodule import AMINOPadCollate
+from AMINO.datamodule.datasets import AMINO_ConcatDataset
+from AMINO.utils.init_object import init_list_object
 
 class AMINODataModule(pl.LightningDataModule):
     def __init__(self, datamodule_conf):
@@ -41,6 +43,25 @@ class AMINODataModule(pl.LightningDataModule):
 
         if stage in (None, 'test'):
             self.stage_setup(['test'])
+    
+    def get_num_classes(self):
+        if hasattr(self, "num_classes"):
+            return self.num_classes
+        try:
+            num_classes = torch.tensor([
+                dataset.get_num_classes() 
+                for dataset in self.datasets.values() if dataset is not None
+            ])
+            assert num_classes.max() == num_classes.min(), \
+                f"num_classes in each data is not same"
+            num_classes = num_classes.max().item()
+        except Exception as e:
+            logging.warning(
+                f"Something wrong with get_num_classes, return None"
+            )
+            num_classes = None
+        self.num_classes = num_classes
+        return self.num_classes
 
     def stage_setup(self, key_selects):
         precrocesses = dict()
@@ -49,7 +70,8 @@ class AMINODataModule(pl.LightningDataModule):
                 precrocesses[key] = init_preporcesses(value)
         for key, value in self.datamodule_conf['datasets'].items():
             if key in key_selects:
-                self.datasets[key] = init_datasets(value)
+                self.datasets[key] = AMINO_ConcatDataset(datasets) \
+                    if (datasets := init_list_object(value)) is not None else None
                 if self.datasets[key] is not None:
                     logging.info(f"the {key} dataset len: {len(self.datasets[key])}")
                     self.datasets[key].set_preprocesses(
@@ -130,6 +152,3 @@ class AMINODataModule(pl.LightningDataModule):
 
     def tesrdown(self):
         super().teardown()
-
-def init_datamodule(datamodule_conf):
-    return AMINODataModule(datamodule_conf)

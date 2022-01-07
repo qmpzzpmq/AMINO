@@ -7,10 +7,10 @@ from omegaconf import OmegaConf
 import pytorch_lightning as pl
 
 from AMINO.configs.configs import TRAIN_CONFIG, register_OmegaConf_resolvers
-from AMINO.datamodule.datamodule import init_datamodule
-from AMINO.utils.callbacks import init_callbacks
-from AMINO.utils.loggers import init_loggers
-from AMINO.modules.modules import init_module
+from AMINO.datamodule.datamodule import AMINODataModule
+from AMINO.modules.classifier import AMINO_CLASSIFIER
+from AMINO.utils.dynamic_import import dynamic_import
+from AMINO.utils.init_object import init_object, init_list_object
 
 @hydra.main(
     config_path=os.path.join(os.getcwd(), 'conf'),
@@ -30,15 +30,21 @@ def main(read_cfg) -> None:
     hydra_config = hydra.core.hydra_config.HydraConfig.get()
     OmegaConf.save(config=cfg, f=f'{hydra_config.job.name}.yaml')
     logging.info(f'Config: {OmegaConf.to_yaml(cfg)}')
-    logging.basicConfig(
-        level=cfg.logging.level,
-        format='%(asctime)s (%(module)s:%(lineno)d) %(levelname)s: %(message)s',
-    )
 
-    callbacks = init_callbacks(cfg['callbacks'])
-    loggers = init_loggers(cfg['loggers'])
-    datamodule = init_datamodule(cfg['datamodule'])
-    module = init_module(cfg['module'])
+    callbacks = init_list_object(cfg['callbacks'])
+    loggers = init_list_object(cfg['loggers'])
+    datamodule = AMINODataModule(cfg['datamodule'])
+    if issubclass(dynamic_import(cfg['module']['select']), AMINO_CLASSIFIER):
+        datamodule.setup() # dev
+        num_classes = datamodule.get_num_classes()
+        if "num_classes" in cfg['pipeline_size'] and \
+                type(cfg['pipeline_size']['num_classes']) == int:
+            assert num_classes == cfg['module_flexible_size']['num_classes'], \
+                f"the num_classes {num_classes} in dataset not equals \
+                    num_classes {cfg['pipeline_size']['num_classes']} in configs"
+        else:
+            cfg['pipeline_size']['num_classes'] = num_classes
+    module = init_object(cfg['module'])
     module.summarize(mode="full")
     trainer = pl.Trainer(
         callbacks=callbacks,

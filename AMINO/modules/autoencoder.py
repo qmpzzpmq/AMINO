@@ -1,6 +1,6 @@
-from AMINO.modules.base_module import AMINO_MODULE
+from AMINO.modules.base_module import ADMOS_MODULE
 
-class AMINO_AUTOENCODER(AMINO_MODULE):
+class AMINO_AUTOENCODER(ADMOS_MODULE):
     def batch2loss(self, feature, feature_len):
         # feature shoule be (batch, channel, time, feature)
         pred = self.net(feature)
@@ -32,6 +32,3 @@ class AMINO_AUTOENCODER(AMINO_MODULE):
             )
             losses[f"val_{k}_loss"] = loss
         return losses
-
-    def configure_optimizers(self):
-        return [self.optim], [self.scheduler]

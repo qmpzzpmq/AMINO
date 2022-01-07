@@ -4,7 +4,7 @@ import logging
 
 from AMINO.utils.dynamic_import import dynamic_import
 
-def init_module(module_conf):
+def init_module(module_conf, num_classes=None):
     try:
         module_class = dynamic_import(module_conf['select'])
     except Exception as e:
@@ -20,7 +20,7 @@ def init_module(module_conf):
     except Exception as e:
         logging.warning(
             f"""
-                net class object error: {e}, 
+                module class object error: {e}, 
                 please check {os.path.realpath(__file__)} 
                 to check net class's in parameters
             """

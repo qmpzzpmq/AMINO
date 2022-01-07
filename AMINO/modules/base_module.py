@@ -5,10 +5,8 @@ import torch
 import torch.nn as nn
 import pytorch_lightning as pl
 
-from AMINO.modules.nets.nets import init_net
-from AMINO.modules.loss import init_loss
-from AMINO.modules.optim import init_optim
-from AMINO.modules.scheduler import init_scheduler
+from AMINO.utils.init_object import init_object
+
 
 def data_seperation(batch, seperation_dim=0):
     feature = batch['feature']['data']
@@ -30,23 +28,26 @@ def data_seperation(batch, seperation_dim=0):
     return out_dict
 
 class AMINO_MODULE(pl.LightningModule):
-    def __init__(self, 
-            net_conf=None, 
-            loss_conf=None,
-            optim_conf=None,
-            scheduler_conf=None,  
+    def __init__(self,
+            net=None, 
+            loss=None,
+            optim=None,
+            scheduler=None,  
     ):
         super().__init__()
-        if net_conf:
-            self.net = init_net(net_conf)
-        if loss_conf:
-            self.loss = init_loss(loss_conf)
-        if optim_conf is not None:
-            self.optim = init_optim(self.net, optim_conf)
-            if scheduler_conf is not None:
-                self.scheduler = init_scheduler(self.optim, scheduler_conf)
+        self.net = init_object(net)
+        if loss:
+            self.loss = init_object(loss)
+        if optim:
+            self.optim = init_object(self.net, optim)
+            if scheduler:
+                self.scheduler = init_object(self.optim, scheduler)
         self.save_hyperparameters()
 
+    def configure_optimizers(self):
+        return [self.optim], [self.scheduler]
+
+class ADMOS_MODULE(AMINO_MODULE):
     def data_seperation(self, batch, seperation_dim=0):
         return data_seperation(batch, seperation_dim=seperation_dim)
 

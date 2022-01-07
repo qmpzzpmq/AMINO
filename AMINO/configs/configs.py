@@ -102,7 +102,7 @@ class TRAIN_CONFIG():
     logging: LOGGING = field(default_factory=LOGGING)
     trainer: TRAINER = field(default_factory=TRAINER)
     variables: Any = None
-    hydra: Any = None
+    pipeline_size: Any = None
     feature_statistics: FEATURE_STATISTICS = field(default_factory=FEATURE_STATISTICS)
 
 def register_OmegaConf_resolvers():
