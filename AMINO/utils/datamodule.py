@@ -51,24 +51,30 @@ class MulPadCollate(object):
         datas = list()
         datas_len = list()
         for i, pad_choice in enumerate(self.pad_choices):
-            if pad_choice:
-                each_data = [x[i] for x in batch]
+            each_data = [x[i] for x in batch]
+            if pad_choice == "pad":
                 each_data_len = [x.shape[self.dim] for x in each_data]
                 max_len = max(each_data_len)
                 padded_each_data = [pad_tensor(x, max_len, self.dim) for x in each_data]
                 datas.append(torch.stack(padded_each_data, dim=0))
                 datas_len.append(torch.tensor(each_data_len))
-            else:
-                each_data = [x[i] for x in batch]
-                datas.append(torch.tensor(each_data))
+            elif pad_choice == "unpad":
+                datas.append(torch.stack(each_data))
                 datas_len.append(
                     torch.tensor([x.shape[self.dim] for x in each_data])
                 )
+            elif pad_choice == "onehot":
+                datas.append(torch.stack(each_data))
+                datas_len.append(
+                    torch.ones(len(each_data), dtype=torch.int)
+                )
+            else:
+                raise ValueError(f"{pad_choice} is not implement")
         return datas, datas_len
 
 class AMINOPadCollate(MulPadCollate):
-    def __init__(self):
-        super().__init__([True, False], dim=-1)
+    def __init__(self, pad_choices=[True, False]):
+        super().__init__(pad_choices, dim=-1)
     def __call__(self, batch):
         datas, datas_len = MulPadCollate.__call__(self, batch)
         return {

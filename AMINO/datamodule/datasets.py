@@ -3,49 +3,30 @@ import os
 import random
 import glob
 import csv
-from typing import OrderedDict
 
 import torchaudio
-import torchaudio.sox_effects as sox_effects
 import torch
 
-from AMINO.utils.dynamic_import import dynamic_import
-from AMINO.utils.init_object import init_object
-
-# copy from https://github.com/wenet-e2e/wenet/blob/main/wenet/dataset/dataset_deprecated.py
-# add speed perturb when loading wav
-# return augmented, sr
-def _load_wav_with_speed(wav_file, speed, start=0, end=-1):
-    """ Load the wave from file and apply speed perpturbation
-    Args:
-        wav_file: input feature, T * F 2D
-    Returns:
-        augmented feature
-    """
-    if speed == 1.0:
-        wav, sr = torchaudio.load(
-            wav_file, 
-            frame_offset=start, num_frames=end-start
-        )
+def load_wav_with_speed_resample(wav_file, speed, fs=None, start=0, end=-1):
+    if start == 0 and end == -1:
+        wav, sr = torchaudio.backend.sox_io_backend.load(wav_file)
     else:
-        sample_rate = torchaudio.backend.sox_io_backend.info(
+        sr = torchaudio.backend.sox_io_backend.info(
             wav_file).sample_rate
-        # get torchaudio version
-        ta_no = torchaudio.__version__.split(".")
-        ta_version = 100 * int(ta_no[0]) + 10 * int(ta_no[1])
-
-        if ta_version < 80:
-            # Note: deprecated in torchaudio>=0.8.0
-            E = sox_effects.SoxEffectsChain()
-            E.append_effect_to_chain('speed', speed)
-            E.append_effect_to_chain("rate", sample_rate)
-            E.set_input_file(wav_file)
-            wav, sr = E.sox_build_flow_effects()
-        else:
-            # Note: enable in torchaudio>=0.8.0
-            wav, sr = sox_effects.apply_effects_file(
-                wav_file,
-                [['speed', str(speed)], ['rate', str(sample_rate)]])
+        frame_offset = int(sr * start)
+        num_frames = int(sr * (end-start))
+        wav, sr = torchaudio.backend.sox_io_backend.load(
+            wav_file, frame_offset=frame_offset, num_frames=num_frames,
+        )
+    effects = []
+    if not (speed == 1.0):
+        effects.append(['speed', str(speed)])
+    if (fs is not None) and (fs != sr):
+        effects.append(['rate', str(fs)])
+    if len(effects) > 0:
+        wav, sr = torchaudio.sox_effects.apply_effects_tensor(
+            wav, sr, effects
+        )
     return wav, sr
 
 def toyadmos2_file_list_generator(
@@ -86,14 +67,21 @@ def dcase2020_task2_file_list_generator(
         )
     return files_list
 
+def rebuild_row_list(row, out_len):
+    row_len = len(row)
+    if row_len != out_len:
+        return row[0:out_len-1]+ [",".join(row[out_len-1:])]
+    return row
+
 def audioset_csv_reader(csv_path, dict_key):
     data = []
+    len_dict = len(dict_key)
     with open(csv_path, 'r') as fin:
         reader = csv.reader(fin)
         for row in reader:
             if (not row[0].startswith("#")) and \
-                    (len(row) == len(dict_key)) and \
                     (row[0] != "index"):
+                row = rebuild_row_list(row, len_dict)
                 item_dict = {}
                 for key, value in zip(dict_key, row):
                     item_dict[key] = value.strip(" ").strip("\"")
@@ -116,10 +104,11 @@ def audioset_label_dict_builder(data_list):
 def audioset_tokener(data_list, label_dict, data_dir):
     token_data_list = []
     for item in data_list:
+        audio_path = os.path.join(data_dir, f"Y{item['YTID']}.wav")
+        if not os.path.isfile(audio_path):
+            continue
         token_data_list.append({
-            "path": os.path.join(data_dir, f"{item['YTID']}.wav"),
-            "start": item['start_seconds'],
-            "end": item['end_seconds'],
+            "path": audio_path,
             "token": torch.tensor(
                 [label_dict[x] for x in item['positive_labels'].split(',')],
             )
@@ -149,26 +138,16 @@ class AMINO_DATASET(torch.utils.data.Dataset):
 
     def set_preprocesses(self, preprocesses_func):
         self.preprocess_func = preprocesses_func
+
     def standard_read(self, path, start=0, end=-1):
-        try:
-            # data, fs = torchaudio.load(self.file_list[index], channels_first=True)
-            speed = random.choices(
-                self.speed_perturb,
-                self.speed_perturb_weight,
-                k=1
-            )[0] if self.speed_perturb is not None else 1.0
-            data, fs = _load_wav_with_speed(
-                path,
-                speed,
-                start,
-                end,
-            )
-        except Exception as e:
-            logging.warning(
-                f"Something wrong with resample {path}, skip the utt"
-            )
-            logging.warning(e)
-            return None
+        speed = random.choices(
+            self.speed_perturb,
+            self.speed_perturb_weight,
+            k=1,
+        )[0] if self.speed_perturb is not None else 1.0
+        data, fs = load_wav_with_speed_resample(
+            path, speed, self.fs, start, end,
+        )
         if self.preprocess_func is not None:
             try:
                 data = self.preprocess_func([data, fs])
@@ -292,11 +271,14 @@ class AUDIOSET_DATASET(AMINO_DATASET):
 
     def __getitem__(self, index):
         item = self.data_list[index]
-        data = self.standard_read(item['path'], item['start'], item['end'])
+        data = self.standard_read(item['path'])
         if data is None:
             return None
-        label = item['token']
-        return data, label
+        labels = item['token']
+        label_encode = torch.zeros(self.num_classes, dtype=torch.int)
+        for label in labels:
+            label_encode[label] = 1 
+        return data, label_encode
     
     def get_num_classes(self):
         return self.num_classes

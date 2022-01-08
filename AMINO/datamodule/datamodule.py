@@ -77,7 +77,9 @@ class AMINODataModule(pl.LightningDataModule):
                     self.datasets[key].set_preprocesses(
                         precrocesses.get(key, None)
                     )
-                self.collect_fns[key] = AMINOPadCollate()
+                self.collect_fns[key] = AMINOPadCollate(
+                    **self.datamodule_conf['collect_fns'][key]
+                )
 
     def train_dataloader(self):
         if self.datasets['train'] is not None:

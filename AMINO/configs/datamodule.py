@@ -29,6 +29,18 @@ class DATASETS(ABC):
 
 @type_checked_constructor()
 @dataclass
+class COLLECT_FN(ABC):
+    pad_choices: List[str] = ["pad", "unpad"]
+
+@type_checked_constructor()
+@dataclass
+class COLLECT_FNS(ABC):
+    train: COLLECT_FN = field(default_factory=COLLECT_FN)
+    val: COLLECT_FN = field(default_factory=COLLECT_FN)
+    test: COLLECT_FN = field(default_factory=COLLECT_FN)
+
+@type_checked_constructor()
+@dataclass
 class TRANSFORMS(ABC):
     train: Union[List[AMINO_CONF], None] = field(default_factory=None)
     val: Union[List[AMINO_CONF], None] = field(default_factory=None)
@@ -39,6 +51,7 @@ class TRANSFORMS(ABC):
 class DATAMODULE(ABC):
     datasets: DATASETS = field(default_factory=DATASETS)
     dataloaders: DATALOADERS= field(default_factory=DATALOADERS)
+    collect_fns: COLLECT_FNS = field(default_factory=COLLECT_FNS)
     single_preprocesses: TRANSFORMS = TRANSFORMS(
         train= None,
         val= None,

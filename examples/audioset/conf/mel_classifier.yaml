@@ -72,6 +72,13 @@ datamodule:
     val:
       batch_size: ${variables.batch_size}
       num_workers: ${variables.dataloaders_num_workers}
+  collect_fns:
+    train:
+      pad_choices: ['pad', 'onehot']
+    val:
+      pad_choices: ['pad', 'onehot']
+    test:
+      pad_choices: ['pad', 'onehot']
 
 module:
   select: "AMINO.modules.classifier:AMINO_CLASSIFIER"
