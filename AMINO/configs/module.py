@@ -1,10 +1,18 @@
 from abc import ABC
-from typing import Any
+from typing import Union
 
 from dataclasses import dataclass, MISSING, field
 from undictify import type_checked_constructor
 
 from AMINO.configs.common import AMINO_CONF
+
+@type_checked_constructor()
+@dataclass
+class LOSSES(ABC):
+    # net: Dict[str, AMINO_CONF] = field(default_factory=Dict)
+    # weight: Dict[str, float] = field(default_factory=Dict)
+    net: dict = field(default_factory=dict)
+    weight: dict = field(default_factory=dict)
 
 @dataclass
 class OPTIM(AMINO_CONF, ABC):
@@ -13,7 +21,11 @@ class OPTIM(AMINO_CONF, ABC):
 @type_checked_constructor()
 @dataclass
 class MODULE_CONF(ABC):
-    loss: AMINO_CONF = AMINO_CONF(select="torch.nn:MSELoss", conf={"reduction": "none"})
+    # losses: LOSSES = LOSSES(
+    #     net={"autoencoder": AMINO_CONF(select="torch.nn:MSELoss", conf={"reduction": "none"})},
+    #     weight={"autoencoder": 1.0},
+    # )
+    losses: Union[LOSSES, None] = None
     optim: OPTIM = OPTIM(
         select="torch.optim:Adam", 
         contiguous_params=False,

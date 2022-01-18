@@ -87,16 +87,16 @@ class AMINO_TRANSFORMER_ENCODER(nn.Module):
             self.layer_drop = layer_drop
 
     def forward(self, xs, xs_lens):
-        num_layer_reuse = np.random.binomial(
-            self.num_layer_reuse, self.layer_drop
+        num_layers_reuse = np.random.binomial(
+            self.num_layers_reuse, self.layer_drop
         ) \
             if self.training and hasattr(self, "layer_drop") \
-            else self.num_layer_reuse
-        masks = ~make_pad_mask(xs_lens)
+            else self.num_layers_reuse
+        masks = ~make_pad_mask(xs_lens).unsqueeze(1) 
         if self.global_cmvn is not None:
             xs = self.global_cmvn(xs)
-        xs, pos_emb, masks = self.embd(xs, masks)
-        for _ in range(num_layer_reuse):
+        xs, xs_len, pos_emb, masks = self.embd(xs, xs_lens, masks)
+        for _ in range(num_layers_reuse):
             for encoder in self.encoders:
-                xs = encoder(xs, masks)
-        return xs, masks
+                xs, masks, _ = encoder(xs, masks, pos_emb)
+        return xs, xs_len

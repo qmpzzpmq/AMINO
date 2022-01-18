@@ -10,7 +10,9 @@
             "justMyCode": true,
             "args": [
                 "--config-name", "mel_classifier.yaml",
-                "hydra.job.name=test"
+                "hydra.job.name=test",
+                "++variables.dataloaders_num_workers=0",
+                "++variables.batch_size=2",
             ],
             "env": {
                 "PYTHONPATH": "../..:${PYTHONPATH}",

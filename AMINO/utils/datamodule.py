@@ -73,7 +73,7 @@ class MulPadCollate(object):
         return datas, datas_len
 
 class AMINOPadCollate(MulPadCollate):
-    def __init__(self, pad_choices=[True, False]):
+    def __init__(self, pad_choices=["pad", "unpad"]):
         super().__init__(pad_choices, dim=-1)
     def __call__(self, batch):
         datas, datas_len = MulPadCollate.__call__(self, batch)

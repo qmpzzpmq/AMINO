@@ -10,7 +10,7 @@ from AMINO.modules.optim import init_optim
 from AMINO.modules.scheduler import init_scheduler
 
 
-def data_seperation(batch, seperation_dim=0):
+def ADMOS_seperation(batch, seperation_dim=0):
     feature = batch['feature']['data']
     feature_len = batch['feature']['len']
     label = batch['label']['data']
@@ -32,14 +32,22 @@ def data_seperation(batch, seperation_dim=0):
 class AMINO_MODULE(pl.LightningModule):
     def __init__(self,
             net=None, 
-            loss=None,
+            losses=None,
             optim=None,
             scheduler=None,  
     ):
         super().__init__()
         self.net = init_object(net)
-        if loss:
-            self.loss = init_object(loss)
+        if losses:
+            self.losses = dict()
+            self.losses_weight = dict()
+            assert list(losses['net'].keys()) == list(losses['weight'].keys()), \
+                f"the key of loss weight is not same with the key in loss net"
+            for k, v in losses['net'].items():
+                self.losses[k] = init_object(v)
+            for k, v in losses['weight'].items():
+                self.losses_weight[k] = v
+
         if optim:
             self.optim = init_optim(self.net, optim)
             if scheduler:
@@ -50,8 +58,8 @@ class AMINO_MODULE(pl.LightningModule):
         return [self.optim], [self.scheduler]
 
 class ADMOS_MODULE(AMINO_MODULE):
-    def data_seperation(self, batch, seperation_dim=0):
-        return data_seperation(batch, seperation_dim=seperation_dim)
+    def ADMOS_seperation(self, batch, seperation_dim=0):
+        return ADMOS_seperation(batch, seperation_dim=seperation_dim)
 
     def feature_statistics_init(self, feature_dim):
         self.avg_features = nn.ParameterDict({

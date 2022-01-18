@@ -13,6 +13,19 @@ datamodule:
       shuffle: true
       num_workers: 0
     test: null
+  collect_fns:
+    train:
+      pad_choices:
+      - pdb
+      - unpad
+    val:
+      pad_choices:
+      - pdb
+      - unpad
+    test:
+      pad_choices:
+      - pdb
+      - unpad
   single_preprocesses:
     train: null
     val: null
@@ -42,10 +55,7 @@ datamodule:
 module:
   select: AMINO.modules.autoencoder:AMINO_AUTOENCODER
   conf:
-    loss:
-      select: torch.nn:MSELoss
-      conf:
-        reduction: none
+    losses: null
     optim:
       select: torch.optim:Adam
       conf:

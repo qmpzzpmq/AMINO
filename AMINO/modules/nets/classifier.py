@@ -11,20 +11,22 @@ class AMINO_CLASSIFIER(nn.Module):
         super().__init__()
         self.encoder = init_object(encoder)
         # decoder could be ’AMINO.modules.nets.classifier:AMINO_GP_DECODER‘
-        # and ‘’
-        self.decoder = nn.ModuleList([
-            init_object(decoder) for decoder in decoders
-        ])
+        # and 
+        module_dict = {}
+        for k, v in decoders.items():
+            module_dict[k] = init_object(v)
+        self.decoders = nn.ModuleDict(module_dict)
+
     def forward(self, xs, xs_len):
         # xs: (B, T, F)
         hs, hs_len = self.encoder(xs, xs_len)
-        ys_list = []
-        ys_len_list = []
-        for decoder in self.decoders:
+        ys_dict = dict()
+        ys_len_dict = dict()
+        for key, decoder in self.decoders.items():
             ys, ys_len = decoder(hs, hs_len)
-            ys_list.append(ys)
-            ys_len_list.append(ys_len)
-        return ys_list, ys_len_list
+            ys_dict[key] = ys
+            ys_len_dict[key] = ys_len
+        return ys_dict, ys_len_dict
 
 class AMINO_GP_DECODER(nn.Module):
     def __init__(
@@ -39,9 +41,9 @@ class AMINO_GP_DECODER(nn.Module):
     def forward(self, hs, hs_len):
         # hs: (B, T, H)
         cs, cs_len = self.buncher(hs, hs_len)
-        # cs: (B, C)
+        # cs: (B, T, C)
         ys, ys_len = self.pooler(cs, cs_len)
-        # ys: (B, T, C)
+        # ys: (B, C)
         return ys, ys_len
 
 class AMINO_AUTOENCDOER_DECODER(nn.Module):

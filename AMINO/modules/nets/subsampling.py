@@ -42,7 +42,8 @@ class LinearNoSubsampling(BaseSubsampling):
 
     def forward(
             self,
-            x: torch.Tensor,
+            xs: torch.Tensor,
+            xs_len: torch.Tensor,
             x_mask: torch.Tensor,
             offset: int = 0
     ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
@@ -56,6 +57,6 @@ class LinearNoSubsampling(BaseSubsampling):
             torch.Tensor: linear input mask (#batch, 1, time'),
                 where time' = time .
         """
-        x = self.out(x)
-        x, pos_emb = self.pos_enc(x, offset)
-        return x, pos_emb, x_mask
+        xs = self.out(xs)
+        xs, pos_emb = self.pos_enc(xs, offset)
+        return xs, xs_len, pos_emb, x_mask,

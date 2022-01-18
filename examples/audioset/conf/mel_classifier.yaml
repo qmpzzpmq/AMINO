@@ -96,22 +96,27 @@ module:
             d_model: 256
             nhead: 8
         decoders:
-          - select: "AMINO.modules.nets.classifier:AMINO_GP_DECODER"
+          classifier:
+            select: "AMINO.modules.nets.classifier:AMINO_GP_DECODER"
             conf:
               buncher:
                 select: "AMINO.modules.nets.buncher:SIMPLE_LINEAR_BUNCHER"
                 conf:
-                  num_hidden: ${module.conf.net.conf.encoder.conf.dim_feedforward}
+                  num_hidden: ${module.conf.net.conf.encoder.conf.d_model}
                   num_classes: ${pipeline_size.num_classes}
               pooler:
                 select: "AMINO.modules.nets.pooler:SIMPLE_POOLER"
                 conf:
                   pooling_method: "mean"
-    loss:
-      select: "AMINO.modules.label_smoothing_loss:LABEL_SMOOTHING_LOSS"
-      conf:
-        size: ${pipeline_size.num_classes}
-        smoothing: 0.1
+    losses:
+      net:
+        classifier:
+          select: "AMINO.modules.label_smoothing_loss:LABEL_SMOOTHING_LOSS"
+          conf:
+            size: ${pipeline_size.num_classes}
+            smoothing: 0.1
+      weight:
+        classifier: 1.0
 
 trainer:
   gpus: 

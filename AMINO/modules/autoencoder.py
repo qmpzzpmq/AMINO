@@ -9,7 +9,7 @@ class AMINO_AUTOENCODER(ADMOS_MODULE):
         return loss
 
     def training_step(self, batch, batch_idx):
-        seperated_batch = self.data_seperation(batch)
+        seperated_batch = self.ADMOS_seperation(batch)
         feature = seperated_batch['normal']['data']
         feature_len = seperated_batch['normal']['len']
         loss = self.batch2loss(feature, feature_len)
@@ -21,7 +21,7 @@ class AMINO_AUTOENCODER(ADMOS_MODULE):
         return {'loss': loss}
 
     def validation_step(self, batch, batch_idx):
-        seperated_batch = self.data_seperation(batch)
+        seperated_batch = self.ADMOS_seperation(batch)
         losses = dict()
         for k, v in seperated_batch.items():
             loss = self.batch2loss(v['data'], v['len'])

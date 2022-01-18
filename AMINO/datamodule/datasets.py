@@ -275,7 +275,7 @@ class AUDIOSET_DATASET(AMINO_DATASET):
         if data is None:
             return None
         labels = item['token']
-        label_encode = torch.zeros(self.num_classes, dtype=torch.int)
+        label_encode = torch.zeros(self.num_classes, dtype=torch.int64)
         for label in labels:
             label_encode[label] = 1 
         return data, label_encode

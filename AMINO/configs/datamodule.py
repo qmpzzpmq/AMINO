@@ -30,14 +30,20 @@ class DATASETS(ABC):
 @type_checked_constructor()
 @dataclass
 class COLLECT_FN(ABC):
-    pad_choices: List[str] = ["pad", "unpad"]
+    pad_choices: List[str] = field(default_factory=None)
 
 @type_checked_constructor()
 @dataclass
 class COLLECT_FNS(ABC):
-    train: COLLECT_FN = field(default_factory=COLLECT_FN)
-    val: COLLECT_FN = field(default_factory=COLLECT_FN)
-    test: COLLECT_FN = field(default_factory=COLLECT_FN)
+    train: COLLECT_FN = COLLECT_FN(
+        pad_choices=["pdb", "unpad"],
+    )
+    val: COLLECT_FN = COLLECT_FN(
+        pad_choices=["pdb", "unpad"],
+    )
+    test: COLLECT_FN = COLLECT_FN(
+        pad_choices=["pdb", "unpad"],
+    )
 
 @type_checked_constructor()
 @dataclass

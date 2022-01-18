@@ -59,27 +59,21 @@ class LABEL_SMOOTHING_LOSS(nn.Module):
 
     def forward(self, x: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
         """Compute loss between x and target.
-
-        The model outputs and data labels tensors are flatten to
-        (batch*seqlen, class) shape and a mask is applied to the
-        padding part which should not be calculated for loss.
-
         Args:
             x (torch.Tensor): prediction (batch, class)
-            target (torch.Tensor):
-                target signal masked with self.padding_id (batch)
+            target (torch.Tensor): target onehot (batch, class)
         Returns:
             loss (torch.Tensor) : The KL loss, scalar float value
         """
         assert x.size(-1) == self.size
-        batch_size = x.size(0)
-        # use zeros_like instead of torch.no_grad() for true_dist,
-        # since no_grad() can not be exported by JIT
-        true_dist = torch.zeros_like(x)
-        true_dist.fill_(self.smoothing / (self.size - 1))
-        # Charlie: Don't know why -1
-        ignore = target == IGNORE_ID  # (B,)
-        target = target.masked_fill(ignore, 0)  # avoid -1 index
-        true_dist.scatter_(1, target.unsqueeze(1), self.confidence)
-        kl = self.criterion(torch.log_softmax(x, dim=1), true_dist)
-        return self.reduction(kl.masked_fill(ignore.unsqueeze(1), 0).sum())
+        assert target.size(-1) == self.size
+        target = target.to(dtype=torch.float)
+        mask = (target == 0.0)
+        target = target.masked_fill(mask, self.smoothing)
+        target = target.masked_fill(~mask, self.confidence)
+        kl = self.criterion(torch.log_softmax(x, dim=1), target)
+        return self.reduction(kl)
+
+
+# class AMINO_LOSS(nn.Module):
+#     def __init__()
