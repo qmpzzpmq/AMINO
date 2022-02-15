@@ -11,6 +11,7 @@ from AMINO.datamodule.datamodule import AMINODataModule
 from AMINO.modules.classifier import AMINO_CLASSIFIER
 from AMINO.utils.dynamic_import import dynamic_import
 from AMINO.utils.init_object import init_object, init_list_object
+from AMINO.utils.configs import cfg_process
 
 @hydra.main(
     config_path=os.path.join(os.getcwd(), 'conf'),
@@ -27,9 +28,10 @@ def main(read_cfg) -> None:
     )
     
     cfg = OmegaConf.merge(dft_cfg, read_cfg)
+    # temp_cfg = OmegaConf.to_yaml(read_cfg)
+    # cfg = OmegaConf.structured(TRAIN_CONFIG(**read_cfg))
+
     hydra_config = hydra.core.hydra_config.HydraConfig.get()
-    OmegaConf.save(config=cfg, f=f'{hydra_config.job.name}.yaml')
-    logging.info(f'Config: {OmegaConf.to_yaml(cfg)}')
 
     callbacks = init_list_object(cfg['callbacks'])
     loggers = init_list_object(cfg['loggers'])
@@ -44,26 +46,33 @@ def main(read_cfg) -> None:
                     num_classes {cfg['pipeline_size']['num_classes']} in configs"
         else:
             cfg['pipeline_size']['num_classes'] = num_classes
+    OmegaConf.save(config=cfg, f=f'{hydra_config.job.name}.yaml')
+    logging.info(f'Config: {OmegaConf.to_yaml(cfg)}')
+
     module = init_object(cfg['module'])
-    module.summarize(max_depth=-1)
+    pl.utilities.model_summary.summarize(module, max_depth=-1)
+
+    cfg = cfg_process(cfg)
     trainer = pl.Trainer(
         callbacks=callbacks,
         logger=loggers,
-        **cfg['trainer'],
+        **cfg["trainer"],
     )
 
     logging.warning(
         f"start {hydra_config.job.name} job at dir {os.getcwd()}",
     )
     if cfg.trainer.auto_scale_batch_size is not None:
-        datamodule.batch_size = datamodule.datamodule_conf['dataloaders']['train']['batch_size']
+        datamodule.batch_size = datamodule.datamodule_conf[
+            'dataloaders']['train']['batch_size']
         result = trainer.tune(
             module,
             datamodule=datamodule,
         )
         del datamodule.batch_size
-        datamodule.datamodule_conf.dataloaders.train['batch_size'] = result["scale_batch_size"]
-    trainer.fit(module, datamodule=datamodule)
+        datamodule.datamodule_conf.dataloaders.train['batch_size'] = result[
+            "scale_batch_size"]
+    trainer.fit(module, datamodule=datamodule, ckpt_path=cfg.checkpoint)
     logging.warning("done")
 
 if __name__ == "__main__":

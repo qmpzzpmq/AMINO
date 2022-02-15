@@ -11,14 +11,45 @@
             "args": [
                 "--config-name", "mel_classifier.yaml",
                 "hydra.job.name=test",
-                "++variables.dataloaders_num_workers=0",
-                "++variables.batch_size=2",
+                "++variables.dataloaders_num_workers=5",
+                "++variables.batch_size=32",
+                "++trainer.gpus='0,'",
             ],
             "env": {
                 "PYTHONPATH": "../..:${PYTHONPATH}",
                 "OC_CAUSE": "1",
-                "HYDRA_FULL_ERROR": "1"
+                "HYDRA_FULL_ERROR": "1",
+                "MASTER_PORT": "690838",
             }
-        }
+        },
+        {
+            "name": "hugging_face test",
+            "type": "python",
+            "request": "launch",
+            "program": "hugging_face_test.py",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+        },
+        {
+            "name": "hugging_face model",
+            "type": "python",
+            "request": "launch",
+            "program": "AMINO/bin/train.py",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "args": [
+                "--config-name", "HF_enc_classifier.yaml",
+                "hydra.job.name=HF_enc_test",
+                "++variables.dataloaders_num_workers=5",
+                "++variables.batch_size=8",
+                "++trainer.gpus='0,'",
+            ],
+            "env": {
+                "PYTHONPATH": "../..:${PYTHONPATH}",
+                "OC_CAUSE": "1",
+                "HYDRA_FULL_ERROR": "1",
+                "MASTER_PORT": "690838",
+            }
+        },
     ]
 }

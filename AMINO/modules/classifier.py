@@ -15,13 +15,13 @@ class AMINO_CLASSIFIER(AMINO_MODULE):
                 loss = self.losses[k](
                     pred_dict[k], batch['label']['data']
                 )
-                loss_dict[k] = loss.sum() / batch['feature']['len'].sum()
+                loss_dict[k] = loss.sum()
                 total_loss += loss_dict[k] * self.losses_weight[k]
             elif k.startwith("autoencoder"):
                 loss = self.losses[k](
                     pred_dict[k], batch['feature']['data']
                 )
-                loss_dict[k] = loss.sum() / batch['feature']['len'].sum()
+                loss_dict[k] = loss.sum()
                 total_loss += loss_dict[k] * self.losses_weight[k]
         loss_dict['total'] = total_loss 
         return loss_dict

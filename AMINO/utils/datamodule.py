@@ -50,6 +50,7 @@ class MulPadCollate(object):
         # data extract
         datas = list()
         datas_len = list()
+        batch = [x for x in batch if x is not None]
         for i, pad_choice in enumerate(self.pad_choices):
             each_data = [x[i] for x in batch]
             if pad_choice == "pad":

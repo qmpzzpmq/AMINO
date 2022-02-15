@@ -30,7 +30,7 @@ datamodule:
       -  null
   after_transform:
     train:
-      - select: "AMINO.datamodule.preprocess:LogMelSpectrogram"
+      - select: "AMINO.datamodule.preprocess:MelSpectrogram"
         conf:
           n_fft: ${pipeline_size.nfft}
           n_mels: ${pipeline_size.num_mels}
@@ -89,11 +89,11 @@ module:
           select: "AMINO.modules.nets.encoder:AMINO_TRANSFORMER_ENCODER"
           conf:
             feature_dim: "${product: ${pipeline_size.num_mels}, ${pipeline_size.feature_unfold}}"
-            num_block: 12
+            num_block: 2
             num_layers_reuse: 1
-            dim_feedforward: 2048
+            dim_feedforward: 1024
             d_model: 256
-            nhead: 8
+            nhead: 4
         decoders:
           classifier:
             select: "AMINO.modules.nets.classifier:AMINO_GP_DECODER"

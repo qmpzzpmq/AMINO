@@ -65,9 +65,10 @@ class AMINODataModule(pl.LightningDataModule):
 
     def stage_setup(self, key_selects):
         precrocesses = dict()
-        for key, value in self.datamodule_conf['single_preprocesses'].items():
-            if key in key_selects:
-                precrocesses[key] = init_preporcesses(value)
+        if "single_preprocesses" in self.datamodule_conf:
+            for key, value in self.datamodule_conf["single_preprocesses"].items():
+                if key in key_selects:
+                    precrocesses[key] = init_preporcesses(value)
         for key, value in self.datamodule_conf['datasets'].items():
             if key in key_selects:
                 self.datasets[key] = AMINO_ConcatDataset(datasets) \
@@ -154,3 +155,7 @@ class AMINODataModule(pl.LightningDataModule):
 
     def tesrdown(self):
         super().teardown()
+
+    def get_dataset(self, datasetname):        
+        return self.datasets[datasetname] if datasetname in self.datasets else None
+    

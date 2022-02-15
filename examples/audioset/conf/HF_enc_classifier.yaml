@@ -1,13 +1,12 @@
 variables:
-  audioset_path: "/audioset"
-  batch_size: 256
+  audioset_path: "/audioset_Kong/"
+  batch_size: 1
   dataloaders_num_workers: 0
+  token_nj: "flexible"
+  # token_nj: 20
 
 # it is necessary in module
 pipeline_size:
-  nfft: 1024
-  num_mels: 128
-  feature_unfold: 5
   num_classes: ???
 
 defaults:
@@ -20,50 +19,22 @@ datamodule:
       - select: "AMINO.datamodule.datasets:AUDIOSET_DATASET"
         conf:
           data_dir: ${variables.audioset_path}
-          dataset: "balanced_train"
+          # dataset: "balanced_train"
+          dataset: "unbalanced_train"
+          json_path: "data/unbalanced_train.scp"
+          token_nj: ${variables.token_nj}
     val:
       - select: "AMINO.datamodule.datasets:AUDIOSET_DATASET"
         conf:
           data_dir: ${variables.audioset_path}
           dataset: "eval"
+          json_path: "data/eval.scp"
     test: 
       -  null
   after_transform:
-    train:
-      - select: "AMINO.datamodule.preprocess:LogMelSpectrogram"
-        conf:
-          n_fft: ${pipeline_size.nfft}
-          n_mels: ${pipeline_size.num_mels}
-      - select: "AMINO.datamodule.preprocess:Feature_Unfold"
-        conf:
-          n_frame: ${pipeline_size.feature_unfold}
-      - select: "AMINO.datamodule.preprocess:SpecAug"
-        conf:
-          frequency_mask:
-            F: 30
-            num_mask: 2
-          time_mask:
-            T: 30
-            num_mask: 2
-          time_streatch:
-            floor: 0.9
-            ceil: 1.1
-    val:
-      - select: "AMINO.datamodule.preprocess:LogMelSpectrogram"
-        conf:
-          n_fft: ${pipeline_size.nfft}
-          n_mels: ${pipeline_size.num_mels}
-      - select: "AMINO.datamodule.preprocess:Feature_Unfold"
-        conf:
-          n_frame: ${pipeline_size.feature_unfold}
-    test:
-      - select: "AMINO.datamodule.preprocess:LogMelSpectrogram"
-        conf:
-          n_fft: ${pipeline_size.nfft}
-          n_mels: ${pipeline_size.num_mels}
-      - select: "AMINO.datamodule.preprocess:Feature_Unfold"
-        conf:
-          n_frame: ${pipeline_size.feature_unfold}
+    train: null
+    val: null
+    test: null
   dataloaders:
     train:
       batch_size: ${variables.batch_size}
@@ -71,6 +42,7 @@ datamodule:
     val:
       batch_size: ${variables.batch_size}
       num_workers: ${variables.dataloaders_num_workers}
+      shuffle: False
   collect_fns:
     train:
       pad_choices: ['pad', 'onehot']
@@ -86,14 +58,11 @@ module:
       select: "AMINO.modules.nets.classifier:AMINO_CLASSIFIER"
       conf:
         encoder:
-          select: "AMINO.modules.nets.encoder:AMINO_TRANSFORMER_ENCODER"
+          select: "AMINO.modules.nets.encoder:HUGGINGFACE_WAV2VEC2"
           conf:
-            feature_dim: "${product: ${pipeline_size.num_mels}, ${pipeline_size.feature_unfold}}"
-            num_block: 12
-            num_layers_reuse: 1
-            dim_feedforward: 2048
-            d_model: 256
-            nhead: 8
+            config: null
+            from_pretrained: "facebook/wav2vec2-base-960h"
+            from_pretrained_num_hidden_layers: 3
         decoders:
           classifier:
             select: "AMINO.modules.nets.classifier:AMINO_GP_DECODER"
@@ -101,12 +70,16 @@ module:
               buncher:
                 select: "AMINO.modules.nets.buncher:SIMPLE_LINEAR_BUNCHER"
                 conf:
-                  num_hidden: ${module.conf.net.conf.encoder.conf.d_model}
+                  num_hidden: 768
                   num_classes: ${pipeline_size.num_classes}
               pooler:
                 select: "AMINO.modules.nets.pooler:SIMPLE_POOLER"
                 conf:
                   pooling_method: "mean"
+    scheduler:
+      select: "AMINO.modules.scheduler:WarmupLR"
+      conf:
+        warmup_steps: 2000
     losses:
       net:
         classifier:
@@ -124,25 +97,26 @@ trainer:
   auto_scale_batch_size: null
   log_every_n_steps: 1
   strategy: "ddp"
+  limit_train_batches: 5
 
 callbacks:
 - select: pytorch_lightning.callbacks.progress.tqdm_progress:TQDMProgressBar
   conf:
     refresh_rate: 1
     process_position: 0
-- select: pytorch_lightning.callbacks.model_checkpoint:ModelCheckpoint
-  conf:
-    filename: epoch{epoch}-val_loss_total_epoch{val_loss_total_epoch:.3f}
-    monitor: val_loss_total_epoch
-    save_last: true
-    save_top_k: 5
-    dirpath: checkpoint
-- select: pytorch_lightning.callbacks.early_stopping:EarlyStopping
-  conf:
-    monitor: val_loss_total_epoch
-    mode: min
-    min_delta: 1.0e-06
-    patience: 30
+# - select: pytorch_lightning.callbacks.model_checkpoint:ModelCheckpoint
+#   conf:
+#     filename: epoch{epoch}-val_loss_total_epoch{val_loss_total_epoch:.3f}
+#     monitor: val_loss_total_epoch
+#     save_last: true
+#     save_top_k: 5
+#     dirpath: checkpoint
+# - select: pytorch_lightning.callbacks.early_stopping:EarlyStopping
+#   conf:
+#     monitor: val_loss_total_epoch
+#     mode: min
+#     min_delta: 1.0e-06
+#     patience: 30
 - select: pytorch_lightning.callbacks:DeviceStatsMonitor
   conf: {}
 - select: pytorch_lightning.callbacks.lr_monitor:LearningRateMonitor

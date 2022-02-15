@@ -1,4 +1,5 @@
 import torch.nn as nn
+import torch
 
 class SIMPLE_LINEAR_BUNCHER(nn.Module):
     def __init__(
@@ -14,4 +15,4 @@ class SIMPLE_LINEAR_BUNCHER(nn.Module):
         ])
 
     def forward(self, xs, xs_len):
-        return self.net(xs), xs_len
+        return torch.sigmoid(self.net(xs)), xs_len

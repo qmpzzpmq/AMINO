@@ -31,9 +31,13 @@ class MODULE_CONF(ABC):
         contiguous_params=False,
         conf={"lr": 0.01}
     )
+    # scheduler: AMINO_CONF = AMINO_CONF(
+    #     select="torch.optim.lr_scheduler:StepLR",
+    #     conf={"step_size": 5, "gamma": 0.1}
+    # )
     scheduler: AMINO_CONF = AMINO_CONF(
-        select="torch.optim.lr_scheduler:StepLR",
-        conf={"step_size": 5, "gamma": 0.1}
+        select="AMINO.modules.scheduler:WarmupLR",
+        conf={"warmup_steps": 2000}
     )
     net: AMINO_CONF = AMINO_CONF(
         select="AMINO.modules.nets.autoencoder:simple_autoencoder",

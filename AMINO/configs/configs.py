@@ -1,5 +1,5 @@
 from abc import ABC
-from typing import Any, Dict, Union, List
+from typing import Any, Dict, Optional, Union, List
 
 from omegaconf import OmegaConf
 from dataclasses import dataclass, MISSING, field
@@ -19,11 +19,6 @@ class EXP_BASE(ABC):
   wandb: str = 'wandb'
   neptune: str = 'neptune'
   seed: int = 777
-
-@type_checked_constructor()
-@dataclass
-class LOGGING(ABC):
-    level: str = "DEBUG"
 
 @type_checked_constructor()
 @dataclass
@@ -99,11 +94,67 @@ class TRAIN_CONFIG():
             },
         ),
     ])
-    logging: LOGGING = field(default_factory=LOGGING)
-    trainer: TRAINER = field(default_factory=TRAINER)
+    # it will be fixed in https://github.com/omry/omegaconf/issues/144
+    # trainer: TRAINER =  field(default_factory=lambda: TRAINER(
+    trainer: dict =  field(default_factory=lambda: dict(
+        accelerator = None,
+        accumulate_grad_batches = None,
+        amp_backend = 'native',
+        amp_level = None,
+        auto_lr_find = False,
+        auto_scale_batch_size = False,
+        auto_select_gpus = False,
+        benchmark = False,
+        # callbacks = None,
+        enable_checkpointing = True,
+        check_val_every_n_epoch = 1,
+        default_root_dir = None,
+        detect_anomaly = False,
+        deterministic = False,
+        devices = None,
+        fast_dev_run = False,
+        gpus = None,
+        gradient_clip_val = None,
+        gradient_clip_algorithm = None,
+        limit_train_batches = 1.0,
+        limit_val_batches = 1.0,
+        limit_test_batches = 1.0,
+        limit_predict_batches = 1.0,
+        # limit_val_batches: (Union[int, float])
+        # limit_test_batches: (Union[int, float])
+        # limit_predict_batches: (Union[int, float])
+        # logger = True,
+        log_every_n_steps = 50,
+        enable_progress_bar = True,
+        profiler = None,
+        overfit_batches = 0.0,
+        # plugins: # not need here
+        precision = 32,
+        max_epochs = None,
+        min_epochs =  None,
+        max_steps = -1,
+        min_steps = None,
+        max_time = None,
+        num_nodes = 1,
+        num_processes = 1,
+        num_sanity_val_steps = 2,
+        reload_dataloaders_every_n_epochs = 0,
+        replace_sampler_ddp = True,
+        strategy = None,
+        sync_batchnorm = False,
+        terminate_on_nan = None,
+        tpu_cores = None,
+        ipus = None,
+        track_grad_norm = -1,
+        val_check_interval = 1.0,
+        weights_save_path = None,
+        move_metrics_to_cpu = False,
+        multiple_trainloader_mode = 'max_size_cycle',
+    ))
     variables: Any = None
     pipeline_size: Any = None
     feature_statistics: FEATURE_STATISTICS = field(default_factory=FEATURE_STATISTICS)
+    checkpoint: Optional[Union[None, str]] = None 
 
 def register_OmegaConf_resolvers():
     OmegaConf.register_new_resolver("nfft2fea_dim", lambda x: int(x / 2 + 1))
