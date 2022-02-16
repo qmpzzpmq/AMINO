@@ -9,7 +9,8 @@
             "console": "integratedTerminal",
             "justMyCode": true,
             "args": [
-                "--config-name", "mel_classifier.yaml",
+                "--config-name",
+                "mel_classifier.yaml",
                 "hydra.job.name=test",
                 "++variables.dataloaders_num_workers=5",
                 "++variables.batch_size=32",
@@ -38,11 +39,16 @@
             "console": "integratedTerminal",
             "justMyCode": true,
             "args": [
-                "--config-name", "HF_enc_classifier.yaml",
-                "hydra.job.name=HF_enc_test",
+                "--config-name",
+                "HF_enc_classifier.yaml",
+                "hydra.job.name=HF_Num_layer-3_Train_atch-0.1",
                 "++variables.dataloaders_num_workers=5",
-                "++variables.batch_size=8",
+                "++variables.batch_size=10",
                 "++trainer.gpus='0,'",
+                "++trainer.limit_train_batches=0.1",
+                "++trainer.limit_val_batches=0.0",
+                "++module.conf.scheduler.conf.warmup_steps=30000",
+                "++module.conf.net.conf.encoder.conf.from_pretrained_num_hidden_layers=3",
             ],
             "env": {
                 "PYTHONPATH": "../..:${PYTHONPATH}",
@@ -51,5 +57,19 @@
                 "MASTER_PORT": "690838",
             }
         },
+        {
+            "name": "audioset_dump.py",
+            "type": "python",
+            "request": "launch",
+            "program": "audioset_dump.py",
+            "console": "integratedTerminal",
+            "args": [
+               "conf/HF_enc_classifier.yaml", "data",
+               "--logging_level", "INFO",
+            ],
+            "env": {
+                "PYTHONPATH": "../..:${PYTHONPATH}",
+            },
+        }
     ]
 }

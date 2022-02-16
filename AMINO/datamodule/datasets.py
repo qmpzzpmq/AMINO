@@ -447,7 +447,7 @@ class AUDIOSET_DATASET(AMINO_DATASET):
         try:
             data = self.standard_read(item['path'])
         except Exception as e:
-            logging.warning(f"{e} wrong during data reading, skip it")
+            logging.warning(f"{e} wrong during data {item['path']} reading, skip it")
             return None
         labels = item['token']
         label_encode = torch.zeros(self.num_classes, dtype=torch.int64)

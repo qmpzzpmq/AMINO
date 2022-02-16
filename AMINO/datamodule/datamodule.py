@@ -83,32 +83,28 @@ class AMINODataModule(pl.LightningDataModule):
                 )
 
     def train_dataloader(self):
-        if self.datasets['train'] is not None:
-            return tdata.DataLoader(
-                self.datasets['train'],
-                **self.datamodule_conf['dataloaders']['train'],
-                collate_fn=self.collect_fns['train'],
-            )
-        else:
-            return None
+        return self.x_dataloader("train")
 
     def val_dataloader(self):
-        if self.datasets['val'] is not None:
-            return tdata.DataLoader(
-                self.datasets['val'],
-                **self.datamodule_conf['dataloaders']['val'],
-                collate_fn=self.collect_fns['val'],
-            )
-        else:
-            return None
+        return self.x_dataloader("val")
 
     def test_dataloader(self):
-        if self.datasets['test'] is not None:
-            return tdata.DataLoader(
-                self.datasets['test'],
-                **self.datamodule_conf['dataloaders']['test'],
-                collate_fn=self.collect_fns['test']
+        return self.x_dataloader("test")
+
+    def x_dataloader(self, datasetname):
+        if self.datasets[datasetname] is not None:
+            logging.info(
+                f"there are {len(self.datasets[datasetname])} items in {datasetname} dataset"
             )
+            dataloader = tdata.DataLoader(
+                self.datasets[datasetname],
+                **self.datamodule_conf['dataloaders'][datasetname],
+                collate_fn=self.collect_fns[datasetname],
+            )
+            logging.info(
+                f"there are {len(dataloader)} batches in {datasetname} dataloader"
+            )
+            return dataloader
         else:
             return None
 
