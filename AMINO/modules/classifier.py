@@ -1,6 +1,9 @@
+import logging
+
 import torch
 
 from AMINO.modules.base_module import AMINO_MODULE
+from AMINO.utils.data_check import total_check
 
 class AMINO_CLASSIFIER(AMINO_MODULE):
     def batch2loss(self, batch):
@@ -27,7 +30,14 @@ class AMINO_CLASSIFIER(AMINO_MODULE):
         return loss_dict
 
     def training_step(self, batch, batch_idx):
-        loss_dict = self.batch2loss(batch)
+        if batch is None:
+            return None
+        try:
+            loss_dict = self.batch2loss(batch)
+        except Exception as e:
+            logging.warning(f"something wrong: {e}")
+            check_result = total_check(batch, dim=2)
+            return None
         for k, v in loss_dict.items():
             self.log(
                 f'loss_{k}', v,
@@ -37,11 +47,18 @@ class AMINO_CLASSIFIER(AMINO_MODULE):
         return {'loss': loss_dict['total']}
 
     def validation_step(self, batch, batch_idx):
-        loss_dict = self.batch2loss(batch)
+        if batch is None:
+            return None
+        try:
+            loss_dict = self.batch2loss(batch)
+        except Exception as e:
+            logging.warning(f"something wrong: {e}")
+            check_result = total_check(batch, dim=2)
+            return None
         for k, v in loss_dict.items():
             self.log(
                 f"val_loss_{k}", v,
                 on_step=True, on_epoch=True,
                 prog_bar=True, logger=True,
             )
-    
+ 

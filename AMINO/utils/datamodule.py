@@ -1,3 +1,4 @@
+import logging
 
 import torch
 
@@ -51,6 +52,8 @@ class MulPadCollate(object):
         datas = list()
         datas_len = list()
         batch = [x for x in batch if x is not None]
+        if len(batch) == 0:
+            return None
         for i, pad_choice in enumerate(self.pad_choices):
             each_data = [x[i] for x in batch]
             if pad_choice == "pad":
@@ -77,7 +80,9 @@ class AMINOPadCollate(MulPadCollate):
     def __init__(self, pad_choices=["pad", "unpad"]):
         super().__init__(pad_choices, dim=-1)
     def __call__(self, batch):
-        datas, datas_len = MulPadCollate.__call__(self, batch)
+        if ( outs := MulPadCollate.__call__(self, batch) ) is None:
+            return None
+        datas, datas_len = outs
         return {
             'feature': {'data': datas[0], 'len': datas_len[0]},
             'label': {'data': datas[1], 'len': datas_len[1]},
