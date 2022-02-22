@@ -1,9 +1,10 @@
+import os
 import logging
 
 import torch
 
 from AMINO.modules.base_module import AMINO_MODULE
-from AMINO.utils.data_check import total_check
+from AMINO.utils.data_check import total_check, save_error_tesnsor
 
 class AMINO_CLASSIFIER(AMINO_MODULE):
     def batch2loss(self, batch):
@@ -36,7 +37,8 @@ class AMINO_CLASSIFIER(AMINO_MODULE):
             loss_dict = self.batch2loss(batch)
         except Exception as e:
             logging.warning(f"something wrong: {e}")
-            check_result = total_check(batch, dim=2)
+            check_result = total_check(batch, dim=1)
+            save_error_tesnsor(batch, os.getcwd())
             return None
         for k, v in loss_dict.items():
             self.log(
@@ -54,6 +56,7 @@ class AMINO_CLASSIFIER(AMINO_MODULE):
         except Exception as e:
             logging.warning(f"something wrong: {e}")
             check_result = total_check(batch, dim=2)
+            save_error_tesnsor(batch, os.getcwd())
             return None
         for k, v in loss_dict.items():
             self.log(

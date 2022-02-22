@@ -93,11 +93,12 @@ class AMINODataModule(pl.LightningDataModule):
 
     def x_dataloader(self, datasetname):
         if self.datasets[datasetname] is not None:
+            dataset = self.datasets[datasetname]
             logging.info(
-                f"there are {len(self.datasets[datasetname])} items in {datasetname} dataset"
+                f"there are {len(dataset)} items in {datasetname} dataset"
             )
             dataloader = tdata.DataLoader(
-                self.datasets[datasetname],
+                dataset,
                 **self.datamodule_conf['dataloaders'][datasetname],
                 collate_fn=self.collect_fns[datasetname],
             )

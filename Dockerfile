@@ -7,7 +7,7 @@ ENV TZ=Asia/Singapore
 ENV PATH="/root/miniconda3/bin:${PATH}"
 
 WORKDIR /
-COPY conda_install.sh.sh /conda_install.sh.sh
+COPY conda_install.sh /conda_install.sh
 COPY requirements.txt /requirements.txt
 
 RUN \
@@ -16,12 +16,12 @@ RUN \
     bash Miniconda3-latest-Linux-x86_64.sh -b && \
     rm -f Miniconda3-latest-Linux-x86_64.sh && \
     . /root/miniconda3/etc/profile.d/conda.sh && \ 
-    ./conda_install.sh.sh && \
+    ./conda_install.sh && \
     . /root/miniconda3/etc/profile.d/conda.sh && conda deactivate && conda activate AMINO && \
     which python && \
     pip install -r requirements.txt && \
     conda clean -afy && \
     rm -rf ~/.cache/pip && \
-    rm /conda_install.sh.sh ./requirements.txt && \
+    rm /conda_install.sh ./requirements.txt && \
     echo "done"
 
