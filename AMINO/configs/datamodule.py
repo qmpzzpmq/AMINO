@@ -10,8 +10,9 @@ from AMINO.configs.common import AMINO_CONF
 @dataclass
 class DATALOADER(ABC):
     batch_size: int = 1
-    shuffle: bool = True
+    shuffle: bool = False
     num_workers: int = 0
+    drop_last: bool = True
 
 @type_checked_constructor()
 @dataclass
@@ -54,16 +55,9 @@ class TRANSFORMS(ABC):
 
 @type_checked_constructor()
 @dataclass
-class DATAMODULE(ABC):
-    datasets: DATASETS = field(default_factory=DATASETS)
-    dataloaders: DATALOADERS= field(default_factory=DATALOADERS)
-    collect_fns: COLLECT_FNS = field(default_factory=COLLECT_FNS)
-    single_preprocesses: TRANSFORMS = TRANSFORMS(
-        train= None,
-        val= None,
-        test= None,
-    )
-    after_transform: TRANSFORMS = TRANSFORMS(
+class TOTAL_TRANSFORMS(ABC):
+    item: TRANSFORMS = field(default_factory=TRANSFORMS)
+    batch_after: TRANSFORMS = TRANSFORMS(
         train=[
             AMINO_CONF(
                 select="AMINO.datamodule.preprocess:MelSpectrogram",
@@ -103,3 +97,12 @@ class DATAMODULE(ABC):
             )
         ],
     )
+    batch_before: TRANSFORMS = field(default_factory=TRANSFORMS)
+
+@type_checked_constructor()
+@dataclass
+class DATAMODULE(ABC):
+    datasets: DATASETS = field(default_factory=DATASETS)
+    dataloaders: DATALOADERS= field(default_factory=DATALOADERS)
+    collect_fns: COLLECT_FNS = field(default_factory=COLLECT_FNS)
+    TOTAL_TRANSFORMS: TOTAL_TRANSFORMS = field(default_factory=TOTAL_TRANSFORMS)

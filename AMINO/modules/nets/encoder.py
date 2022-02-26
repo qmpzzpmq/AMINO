@@ -2,6 +2,7 @@ import logging
 import copy
 
 import numpy as np
+import hydra
 
 import torch.nn as nn
 import transformers
@@ -171,7 +172,13 @@ class HUGGINGFACE_WAV2VEC2(nn.Module):
             f"config and from pretrained both is none"
         super().__init__()
         if from_pretrained is not None:
-            pretrain_model = transformers.Wav2Vec2Model.from_pretrained(from_pretrained)
+            cache_dir = hydra.utils.to_absolute_path("../../.HF_CACHE")
+            logging.info(
+                f"using dir {cache_dir} as Hugging Face cache dir"
+            )
+            pretrain_model = transformers.Wav2Vec2Model.from_pretrained(
+                from_pretrained, cache_dir=cache_dir,
+            )
         if pretrain_model is not None and config is None:
             pconfig = pretrain_model.config.to_dict()
             num_hidden_layers = pconfig["num_hidden_layers"]

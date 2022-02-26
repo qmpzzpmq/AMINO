@@ -2,8 +2,8 @@ variables:
   audioset_path: "/audioset_Kong/"
   batch_size: 1
   dataloaders_num_workers: 0
-  token_nj: "flexible"
-  # token_nj: 20
+  # token_nj: "flexible"
+  token_nj: 16
 
 # it is necessary in module
 pipeline_size:
@@ -39,6 +39,7 @@ datamodule:
     train:
       batch_size: ${variables.batch_size}
       num_workers: ${variables.dataloaders_num_workers}
+      shuffle: True
     val:
       batch_size: ${variables.batch_size}
       num_workers: ${variables.dataloaders_num_workers}

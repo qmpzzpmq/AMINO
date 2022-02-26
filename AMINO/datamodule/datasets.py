@@ -217,6 +217,12 @@ class AMINO_DATASET(torch.utils.data.Dataset):
                 f"the mono_channel setting wrong, please read the help in AMINO/configs/datamodule.py"
             )
 
+    def prepare_data(self):
+        pass
+
+    def setup(self):
+        pass
+
     def set_preprocesses(self, preprocesses_func):
         self.preprocess_func = preprocesses_func
 
@@ -302,6 +308,14 @@ class AMINO_ConcatDataset(torch.utils.data.ConcatDataset):
                 item["token"] == torch.tensor(item["token"])
             list.append(item)
         return list
+    
+    def prepare_data(self):
+        for dataset in self.datasets:
+            dataset.prepare_data()
+
+    def setup(self):
+        for dataset in self.datasets:
+            dataset.setup()
 
 class ADMOS_DATASET(AMINO_DATASET):
     def __init__(
@@ -348,95 +362,100 @@ class AUDIOSET_DATASET(AMINO_DATASET):
     def __init__(
         self,
         data_dir,
+        json_path,
         dataset="balanced_train",
         mono_channel="mean",
         fs=16000,
         speed_perturb=[1.0, 1.1, 0.9],
         speed_perturb_weight=[1, 1, 1],
         token_nj=1,
-        json_path=None,
     ):
         super().__init__(fs, mono_channel, speed_perturb, speed_perturb_weight)
-        json_path = hydra.utils.to_absolute_path(json_path)
+        self.json_path = hydra.utils.to_absolute_path(json_path)
         label_list = audioset_csv_reader(
             os.path.join(data_dir, "metadata", "class_labels_indices.csv"),
             ["index", "mid", "display_name"],
         )
         label_dict = audioset_label_dict_builder(label_list)
         self.num_classes = len(label_dict.values())
-        if json_path is not None and os.path.isfile(json_path):
-            logging.info(f"load json from {json_path}")
-            self.data_list = super().load(json_path)
-        else:
-
-            audio_dir = os.path.join(data_dir, "audios")
-            logging.debug(f"audioset {dataset} dataset prepare start")
-            if dataset == "balanced_train":
-                file_name = os.path.join(
-                    data_dir, "metadata", "balanced_train_segments.csv",
-                )
-                segments_dir = os.path.join(audio_dir, "balanced_train_segments")
-            elif dataset == "unbalanced_train":
-                file_name = os.path.join(
-                    data_dir, "metadata", "unbalanced_train_segments.csv"
-                )
-                segments_dir = os.path.join(audio_dir, "unbalanced_train_segments")
-            elif dataset == "eval":
-                file_name = os.path.join(
-                    data_dir, "metadata", "eval_segments.csv"
-                )
-                segments_dir = os.path.join(audio_dir, "eval_segments")
-            else:
-                raise ValueError(f"""
-                    dataset shoule be set between balanced_train/unbalanced_train/eval,
-                    now it is {dataset}.
-                """)
-            assert os.path.isdir(segments_dir), \
-                "the segment dir {segments_dir} donesn't exist"
-            data_list = audioset_csv_reader(
-                file_name,
-                ["YTID", "start_seconds", "end_seconds", "positive_labels"],
+        if os.path.isfile(self.json_path):
+            return
+        audio_dir = os.path.join(data_dir, "audios")
+        logging.debug(f"audioset {dataset} dataset prepare start")
+        if dataset == "balanced_train":
+            file_name = os.path.join(
+                data_dir, "metadata", "balanced_train_segments.csv",
             )
-            subdir = False if dataset == "balanced_train" or dataset == "eval" else True
-            if token_nj == "flexible":
-                token_nj = int(mp.cpu_count())
-            elif token_nj == "half_flexible":
-                token_nj = int(mp.cpu_count() / 2 )
-            logging.info(f"{dataset} dataset start token with {token_nj} nj")
-            if token_nj > 1:
-                # with open(json_path, "w") as fw:
-                #     audioset_tokener_write(
-                #         data_list, label_dict, segments_dir, subdir,
-                #         {"position": 0, "disable": False}, fw
-                #     )
-                with mp.Pool(
-                        processes=token_nj,
-                        initializer=tqdm.set_lock, initargs=(tqdm.get_lock(),)
-                    ) as pool, tempfile.TemporaryDirectory() as tempD:
-                    chunked_data_list = list_split(data_list, token_nj)
-                    logging.debug(f"len chunked_data_list: {len(chunked_data_list)}")
-                    tasks = [
-                        (
-                            x, label_dict, segments_dir, subdir,
-                            {"position": i},
-                            os.path.join(tempD, f"{i}.scp"),
-                        ) \
-                        for i, x in enumerate(chunked_data_list)
-                    ]
-                    
-                    s = pool.starmap(audioset_tokener_write, tasks)
-                    logging.info(f"all token job done")
-                    # self.data_list = list_merge(list(s))
-                    file_merge([x[-1] for x in tasks], json_path)
-                    self.data_list = super().load(json_path)
-            else:
-                self.data_list = audioset_tokener_write(
-                    data_list, label_dict, segments_dir, subdir,
-                    {"position": 0, "disable": False}, json_path
-                )
+            segments_dir = os.path.join(audio_dir, "balanced_train_segments")
+        elif dataset == "unbalanced_train":
+            file_name = os.path.join(
+                data_dir, "metadata", "unbalanced_train_segments.csv"
+            )
+            segments_dir = os.path.join(audio_dir, "unbalanced_train_segments")
+        elif dataset == "eval":
+            file_name = os.path.join(
+                data_dir, "metadata", "eval_segments.csv"
+            )
+            segments_dir = os.path.join(audio_dir, "eval_segments")
+        else:
+            raise ValueError(f"""
+                dataset shoule be set between balanced_train/unbalanced_train/eval,
+                now it is {dataset}.
+            """)
+        assert os.path.isdir(segments_dir), \
+            "the segment dir {segments_dir} donesn't exist"
+        data_list = audioset_csv_reader(
+            file_name,
+            ["YTID", "start_seconds", "end_seconds", "positive_labels"],
+        )
+        subdir = False if dataset == "balanced_train" or dataset == "eval" else True
+        if token_nj == "flexible":
+            token_nj = int(mp.cpu_count())
+        elif token_nj == "half_flexible":
+            token_nj = int(mp.cpu_count() / 2 )
+        logging.info(f"{dataset} dataset start token with {token_nj} nj")
+        self.token_nj = token_nj
+        self.data_list = self.data_list
+        self.label_dict = label_dict
+        self.segments_dir = segments_dir
+        self.subdir = subdir
+
         logging.info(
             f"audioset {dataset} dataset with {len(self.data_list)} item prepare done"
         )
+
+    def prepare_data(self):
+        if os.path.isfile(self.json_path):
+            return 
+        if self.token_njtoken_nj > 1:
+            with mp.Pool(
+                    processes=self.token_nj,
+                    initializer=tqdm.set_lock, initargs=(tqdm.get_lock(),)
+                ) as pool, tempfile.TemporaryDirectory() as tempD:
+                chunked_data_list = list_split(self.data_list, self.token_nj)
+                logging.debug(f"len chunked_data_list: {len(chunked_data_list)}")
+                tasks = [
+                    (
+                        x, self.label_dict, self.segments_dir, self.subdir,
+                        {"position": i},
+                        os.path.join(tempD, f"{i}.scp"),
+                    ) \
+                    for i, x in enumerate(chunked_data_list)
+                ]
+
+                pool.starmap(audioset_tokener_write, tasks)
+                file_merge([x[-1] for x in tasks], self.json_path)
+                self.data_list = super().load(self.json_path)
+        else:
+            self.data_list = audioset_tokener_write(
+                self.data_list, self.label_dict, self.segments_dir, self.subdir,
+                {"position": 0, "disable": False}, self.json_path
+            )
+        
+    def setup(self):
+        if not hasattr(self, "data_list"):
+            logging.info(f"load json from {self.json_path}")
+            self.data_list = super().load(self.json_path)
 
     def __len__(self):
         return len(self.data_list)

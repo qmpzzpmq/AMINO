@@ -34,7 +34,8 @@ class AMINO_MODULE(pl.LightningModule):
             net=None, 
             losses=None,
             optim=None,
-            scheduler=None,  
+            scheduler=None,
+            metrics=None,
     ):
         super().__init__()
         self.net = init_object(net)
@@ -47,11 +48,18 @@ class AMINO_MODULE(pl.LightningModule):
                 self.losses[k] = init_object(v)
             for k, v in losses['weight'].items():
                 self.losses_weight[k] = v
-
         if optim:
             self.optim = init_optim(self.net, optim)
             if scheduler:
                 self.scheduler = init_scheduler(self.optim, scheduler)
+        if metrics:
+            self.metrics = dict()
+            for k1, v1 in metrics.items():
+                assert k1 in ["classifier", "autoencoder"], \
+                    f"{k1} is neither for 'classifier' nor 'autoencoder'"
+                self.metrics[k1] = dict()
+                for k2, v2 in v1.items():
+                    self.metrics[k1][k2] = init_object(v2)
         self.save_hyperparameters()
 
     def configure_optimizers(self):

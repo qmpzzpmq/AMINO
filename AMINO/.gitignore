@@ -3,3 +3,4 @@
 ./module/*.pyc
 ./tools/*.pyc
 ./utils/*.pyc
+./modules/nets/transformer/__pycache__

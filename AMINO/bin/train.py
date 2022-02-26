@@ -6,7 +6,7 @@ from omegaconf import OmegaConf
 
 import pytorch_lightning as pl
 
-from AMINO.configs.configs import TRAIN_CONFIG, register_OmegaConf_resolvers
+from AMINO.configs.resolvers import register_OmegaConf_resolvers
 from AMINO.datamodule.datamodule import AMINODataModule
 from AMINO.modules.classifier import AMINO_CLASSIFIER
 from AMINO.utils.dynamic_import import dynamic_import
@@ -17,17 +17,17 @@ from AMINO.utils.configs import cfg_process
     config_path=os.path.join(os.getcwd(), 'conf'),
     config_name="melspectro_feature_clean.yaml",
 )
-def main(read_cfg) -> None:
-    dft_cfg = OmegaConf.structured(TRAIN_CONFIG)
+def main(cfg) -> None:
+    # dft_cfg = OmegaConf.structured(TRAIN_CONFIG)
     # only for dev
-    OmegaConf.save(
-        config=dft_cfg,
-        f=os.path.join(
-            hydra.utils.get_original_cwd(), 'conf', 'default.yaml',
-        )
-    )
+    # OmegaConf.save(
+    #     config=dft_cfg,
+    #     f=os.path.join(
+    #         hydra.utils.get_original_cwd(), 'conf', 'default.yaml',
+    #     )
+    # )
     
-    cfg = OmegaConf.merge(dft_cfg, read_cfg)
+    # cfg = OmegaConf.merge(dft_cfg, read_cfg)
     # temp_cfg = OmegaConf.to_yaml(read_cfg)
     # cfg = OmegaConf.structured(TRAIN_CONFIG(**read_cfg))
 
@@ -37,8 +37,8 @@ def main(read_cfg) -> None:
     loggers = init_list_object(cfg['loggers'])
     datamodule = AMINODataModule(cfg['datamodule'])
     if issubclass(dynamic_import(cfg['module']['select']), AMINO_CLASSIFIER):
-        datamodule.setup() # dev
         num_classes = datamodule.get_num_classes()
+        assert type(num_classes) == int
         if "num_classes" in cfg['pipeline_size'] and \
                 type(cfg['pipeline_size']['num_classes']) == int:
             assert num_classes == cfg['module_flexible_size']['num_classes'], \
@@ -46,6 +46,7 @@ def main(read_cfg) -> None:
                     num_classes {cfg['pipeline_size']['num_classes']} in configs"
         else:
             cfg['pipeline_size']['num_classes'] = num_classes
+        logging.info(f"num_classes: {num_classes}")
     OmegaConf.save(config=cfg, f=f'{hydra_config.job.name}.yaml')
     logging.info(f'Config: {OmegaConf.to_yaml(cfg)}')
 
@@ -62,7 +63,7 @@ def main(read_cfg) -> None:
     logging.warning(
         f"start {hydra_config.job.name} job at dir {os.getcwd()}",
     )
-    if cfg.trainer.auto_scale_batch_size is not None:
+    if cfg.trainer.auto_scale_batch_size:
         datamodule.batch_size = datamodule.datamodule_conf[
             'dataloaders']['train']['batch_size']
         result = trainer.tune(
@@ -72,6 +73,9 @@ def main(read_cfg) -> None:
         del datamodule.batch_size
         datamodule.datamodule_conf.dataloaders.train['batch_size'] = result[
             "scale_batch_size"]
+    assert cfg.trainer.strategy.startswith("ddp")
+    datamodule.set_replace_sampler_ddp(cfg.trainer.replace_sampler_ddp)
+
     trainer.fit(module, datamodule=datamodule, ckpt_path=cfg.checkpoint)
     logging.warning("done")
 

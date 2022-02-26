@@ -154,8 +154,4 @@ class TRAIN_CONFIG():
     variables: Any = None
     pipeline_size: Any = None
     feature_statistics: FEATURE_STATISTICS = field(default_factory=FEATURE_STATISTICS)
-    checkpoint: Optional[Union[None, str]] = None 
-
-def register_OmegaConf_resolvers():
-    OmegaConf.register_new_resolver("nfft2fea_dim", lambda x: int(x / 2 + 1))
-    OmegaConf.register_new_resolver("product", lambda x, y: x * y)
+    checkpoint: Optional[Union[None, str]] = None

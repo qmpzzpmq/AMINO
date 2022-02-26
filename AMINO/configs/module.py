@@ -1,5 +1,5 @@
 from abc import ABC
-from typing import Union
+from typing import Union, Dict
 
 from dataclasses import dataclass, MISSING, field
 from undictify import type_checked_constructor
@@ -43,3 +43,4 @@ class MODULE_CONF(ABC):
         select="AMINO.modules.nets.autoencoder:simple_autoencoder",
         conf={},
     )
+    metrics: Union[Dict, None] = None
