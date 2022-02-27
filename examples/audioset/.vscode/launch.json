@@ -43,7 +43,7 @@
                 "hydra.job.name=HF_Num_layer-3_Train_Batch-100_Val_Batch-100",
                 "++variables.dataloaders_num_workers=5",
                 "++variables.batch_size=10",
-                "++trainer.gpus='0'",
+                "++trainer.gpus='0,'",
                 "++trainer.limit_train_batches=100",
                 "++trainer.limit_val_batches=100",
                 "++module.conf.scheduler.conf.warmup_steps=30000",
