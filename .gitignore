@@ -1,7 +1,3 @@
-AMINO/configs/__pycache__
-AMINO/datamodule/__pycache__
-AMINO/utils/__pycache__
-AMINO/modules/__pycache__
+
 examples/*/exp
-AMINO/modules/nets/__pycache__
 .HF_CACHE
