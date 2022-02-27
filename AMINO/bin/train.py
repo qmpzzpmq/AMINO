@@ -6,7 +6,7 @@ from omegaconf import OmegaConf
 
 import pytorch_lightning as pl
 
-from AMINO.configs.resolvers import register_OmegaConf_resolvers
+from AMINO.utils.resolvers import register_OmegaConf_resolvers
 from AMINO.datamodule.datamodule import AMINODataModule
 from AMINO.utils.init_object import init_object, init_list_object
 from AMINO.utils.configs import cfg_process, is_classifier
