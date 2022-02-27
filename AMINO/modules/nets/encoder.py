@@ -1,9 +1,13 @@
 import logging
 import copy
+from collections import OrderedDict
 
+import h5py
 import numpy as np
 import hydra
 
+import torchaudio
+import torch
 import torch.nn as nn
 import transformers
 
@@ -14,7 +18,9 @@ from AMINO.modules.nets.subsampling import LinearNoSubsampling
 from AMINO.modules.nets.transformer.attention import MultiHeadedAttention
 from AMINO.modules.nets.transformer.encoder_layer import TransformerEncoderLayer
 from AMINO.modules.nets.transformer.positionwise_feed_forward import PositionwiseFeedForward
+from AMINO.modules.nets.cmvn import GlobalCMVN
 from AMINO.utils.mask import make_pad_mask
+from AMINO.utils.hdf5_load import bn2d_load, conv2d_load
 
 class AMINO_TRANSFORMER_ENCODER(nn.Module):
     def __init__(
@@ -209,10 +215,84 @@ class HUGGINGFACE_WAV2VEC2(nn.Module):
         self.net = model
     
     def forward(self, xs, xs_lens):
+        xs = xs.squeeze(1) # 4D -> 3D
         # masks = ~make_pad_mask(xs_lens).unsqueeze(1)
         masks = ~make_pad_mask(xs_lens)
         output = self.net(
             input_values = xs,
             attention_mask = masks,
         )
-        return output.last_hidden_state, xs_lens
+        return output.extract_features, xs_lens, output.last_hidden_state, xs_lens
+
+class SIMPLE_LINEAR_ENCODER(nn.Module):
+    def __init__(
+        self,
+        feature_dim=128,
+        hidden_dims= [128, 128, 128, 128, 8],
+        drop_out=0.2,
+        sliding_window_cmn=False,
+        cmvn_path=False,
+        load_from_h5=None,
+    ):
+        super().__init__()
+        hidden_dims = copy.deepcopy(hidden_dims)
+        hidden_dims.insert(0, feature_dim)
+        num_layer = len(hidden_dims) - 1
+        layers = OrderedDict()
+        if sliding_window_cmn:
+            logging.info(
+                f"pre-sliding_window_cmn feature extractor in {self.__class__}"
+            )
+            self.feature_extractor = torchaudio.transforms.SlidingWindowCmn()
+        elif cmvn_path:
+            logging.info(f"pre-compute cmvn feature extractor in {self.__class__}")
+            cmvn = torch.load(
+                hydra.utils.to_absolute_path(cmvn_path),
+                map_location=torch.device('cpu')
+            )
+            assert cmvn['normal']['mean'].size(-1) == feature_dim, \
+                f"cmvn feature_dim not equal cmvn readin"
+            self.feature_extractor = GlobalCMVN(
+                mean=cmvn['normal']['mean'],
+                istd=cmvn['normal']['var'],
+            )
+        else:
+            logging.info(f"no feature extractor in {self.__class__}")
+            self.feature_extractor = nn.Identity()
+        for i in range(num_layer):
+            layers[f'dropout{i}'] = nn.Dropout(p=drop_out, inplace=False)
+            layers[f'linear{i}'] = nn.Linear(hidden_dims[i], hidden_dims[i+1])
+            layers[f'norm{i}'] = nn.BatchNorm2d(1)
+            # layers[f'norm{i}'] = AUDIO_NORM(hidden_dims[i+1])
+            layers[f'activation{i}'] = nn.ReLU(inplace=True)
+        self.net = nn.Sequential(layers)
+        if load_from_h5 is not None:
+            self.load_from_h5(load_from_h5)
+
+    def load_from_h5(self, path):
+        path = hydra.utils.to_absolute_path(path)
+        with h5py.File(path) as h5_file:
+            net_weight = h5_file['model_weights']
+            for key in net_weight.keys():
+                if key.startswith('batch_normalization_'):
+                    idx = int(key.split("_", 2)[2])
+                    if idx <= 5:
+                        bn2d_load(
+                            net_weight[key][key],
+                            getattr(self.enc, f"norm{idx-1}"),
+                        )
+                        logging.warning(f"loading {key} to encoder norm{idx-1}")
+                elif key.startswith('dense_'):
+                    idx = int(key.split("_", 1)[1])
+                    if idx <= 5:
+                        conv2d_load(
+                            net_weight[key][key],
+                            getattr(self.enc, f"linear{idx-1}")
+                        )
+                        logging.warning(f"loading {key} to encoder linear{idx-1}")
+
+    def forward(self, xs, xs_len):
+        # x: (B, C, T, F)
+        features = self.feature_extractor(xs)
+        hs = self.net(features)
+        return features, xs_len, hs, xs_len

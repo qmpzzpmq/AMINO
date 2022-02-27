@@ -8,6 +8,7 @@ import pytorch_lightning as pl
 from AMINO.utils.init_object import init_object
 from AMINO.modules.optim import init_optim
 from AMINO.modules.scheduler import init_scheduler
+from AMINO.modules.loss import AMINO_LOSSES
 
 
 def ADMOS_seperation(batch, seperation_dim=0):
@@ -40,14 +41,7 @@ class AMINO_MODULE(pl.LightningModule):
         super().__init__()
         self.net = init_object(net)
         if losses:
-            self.losses = dict()
-            self.losses_weight = dict()
-            assert list(losses['net'].keys()) == list(losses['weight'].keys()), \
-                f"the key of loss weight is not same with the key in loss net"
-            for k, v in losses['net'].items():
-                self.losses[k] = init_object(v)
-            for k, v in losses['weight'].items():
-                self.losses_weight[k] = v
+            self.losses = AMINO_LOSSES(**losses)
         if optim:
             self.optim = init_optim(self.net, optim)
             if scheduler:

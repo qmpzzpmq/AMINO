@@ -5,9 +5,6 @@ variables:
 
 # it is necessary in module
 pipeline_size:
-  nfft: 1024
-  num_mels: 128
-  feature_unfold: 5
   num_classes: ???
 
 defaults:

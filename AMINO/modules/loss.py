@@ -1,12 +1,11 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-
-# Copyright 2019 Shigeki Karita
-#  Apache 2.0  (http://www.apache.org/licenses/LICENSE-2.0)
 """Label smoothing module."""
+
+from typing import OrderedDict
 
 import torch
 from torch import nn
+
+from AMINO.utils.init_object import init_object
 
 IGNORE_ID = -1
 
@@ -75,5 +74,31 @@ class LABEL_SMOOTHING_LOSS(nn.Module):
         return self.reduction(kl)
 
 
-# class AMINO_LOSS(nn.Module):
-#     def __init__()
+class AMINO_LOSSES(nn.Module):
+    def __init__(
+        self,
+        nets,
+        weights,
+    ):
+        super().__init__()
+        assert list(nets.keys()) == list(weights.keys()), \
+            f"the key of loss weight is not same with the key in loss net"
+        self.nets = OrderedDict()
+        for k, v in nets.items():
+            self.nets[k] = init_object(v)
+        self.nets = nn.ModuleDict(self.nets)
+        self.weights = dict()
+        for k, v in weights.items():
+            self.weights[k] = torch.tensor(v, requires_grad=False)
+
+    def forward(self, pred_dict, target_dict, len_dict):
+        loss_dict = dict()
+        loss_dict["total"] = torch.tensor(
+            0.0, device=list(self.weights.values())[0].device,
+        )
+        for key in pred_dict.keys():
+            loss_dict[key] = self.nets[key](
+                pred_dict[key], target_dict[key]
+            ).sum() / len_dict[key]
+            loss_dict["total"] += loss_dict[key] * self.weights[key]
+        return loss_dict

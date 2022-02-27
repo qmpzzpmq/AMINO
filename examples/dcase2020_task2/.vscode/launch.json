@@ -10,6 +10,7 @@
             "request": "launch",
             "program": "AMINO/bin/train.py",
             "console": "integratedTerminal",
+            "stopOnEntry": false,
             "justMyCode": true,
             "args": [
                 "--config-name", "melspectro_feature_clean.yaml",
@@ -18,7 +19,7 @@
                 "++variables.batch_size=5",
                 "++trainer.profiler='simple'",
                 // "++trainer.gpus=[0]",
-                // "++trainer.gpus=0",
+                "++trainer.gpus=0",
                 // "++callbacks.gpu_stats=false",
                 // "hydra/job_logging=disabled",
                 // "hydra/hydra_logging=disabled",

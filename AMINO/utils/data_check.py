@@ -2,6 +2,8 @@ import os
 from datetime import datetime
 import logging
 
+import hydra
+
 import torch
 
 def tensor_nan_check(data):
@@ -55,6 +57,7 @@ def total_check(batch, dim=-2):
 def save_error_tesnsor(data, dir):
     now = datetime.now()
     file_path = f"error{now.strftime('%m.%d.%Y_%H:%M:%S')}.pt"
+    file_path = hydra.utils.to_absolute_path(file_path)
     logging.warning(f"saving error tensor into {file_path}")
     if not os.path.isfile(file_path):
         torch.save(

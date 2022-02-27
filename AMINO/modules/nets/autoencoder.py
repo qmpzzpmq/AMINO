@@ -2,12 +2,12 @@ from collections import OrderedDict
 import logging
 
 import h5py
+import hydra
 
 import torch
 import torchaudio
 import torch.nn as nn
 
-from AMINO.utils.dynamic_import import path_convert
 from AMINO.utils.hdf5_load import bn2d_load, conv2d_load
 from AMINO.modules.nets.cmvn import GlobalCMVN
 
@@ -39,7 +39,7 @@ class simple_autoencoder(nn.Module):
             layers['cmn'] = torchaudio.transforms.SlidingWindowCmn()
         elif cmvn_path:
             cmvn = torch.load(
-                path_convert(cmvn_path),
+                hydra.utils.to_absolute_path(cmvn_path),
                 map_location=torch.device('cpu')
             )
             assert cmvn['normal']['mean'].size(-1) == feature_dim, \
@@ -76,7 +76,7 @@ class simple_autoencoder(nn.Module):
                     nn.init.normal_(layer.bias)
     
     def load_from_h5(self, path):
-        path = path_convert(path)
+        path = hydra.utils.to_absolute_path(path)
         with h5py.File(path) as h5_file:
             net_weight = h5_file['model_weights']
             for key in net_weight.keys():

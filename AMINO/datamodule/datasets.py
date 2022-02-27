@@ -12,6 +12,7 @@ import hydra
 
 import torchaudio
 import torch
+import torch.nn as nn
 
 def load_wav_with_speed_resample(wav_file, speed, fs=None, start=0, end=-1):
     if start == 0 and end == -1:
@@ -205,7 +206,7 @@ class AMINO_DATASET(torch.utils.data.Dataset):
         self.fs = fs
         self.speed_perturb = speed_perturb
         self.speed_perturb_weight = speed_perturb_weight
-        self.preprocess_func = None
+        self.preprocess_func = nn.Identity()
         if mono_channel == "mean":
             # self.mono_func = lambda x: torch.mean(x, dim=0).unsqueeze(0)
             self.mono_func = audio_mean
@@ -235,15 +236,14 @@ class AMINO_DATASET(torch.utils.data.Dataset):
         data, fs = load_wav_with_speed_resample(
             path, speed, self.fs, start, end,
         )
-        if self.preprocess_func is not None:
-            try:
-                data = self.preprocess_func([data, fs])
-            except Exception as e:
-                logging.warning(
-                    f"Something wrong with preprocess {path}, skip the preprocess"
-                )
-                logging.warning(e)
-                return data
+        try:
+            data = self.preprocess_func(data)
+        except Exception as e:
+            logging.warning(
+                f"Something wrong with preprocess {path}, skip the preprocess"
+            )
+            logging.warning(e)
+            return data
         return data
 
     def dump(self, path, data_list=None):
@@ -351,7 +351,7 @@ class ADMOS_DATASET(AMINO_DATASET):
         return len(self.data_list)
     
     def __getitem__(self, index):
-        item = self.file_list[index]
+        item = self.data_list[index]
         data = self.standard_read(item["file"])
         if data is None:
             return None

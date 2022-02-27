@@ -23,9 +23,3 @@ def dynamic_import(import_path, alias=dict()):
     module_name, objname = import_path.split(":")
     m = importlib.import_module(module_name)
     return getattr(m, objname)
-
-def path_convert(path):
-    path = path if os.path.isabs(path) else os.path.join(
-        hydra.utils.get_original_cwd(), path
-    )
-    return path

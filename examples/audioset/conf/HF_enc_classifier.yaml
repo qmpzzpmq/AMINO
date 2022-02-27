@@ -1,5 +1,5 @@
 variables:
-  audioset_path: "/audioset_Kong/"
+  audioset_path: "/audioset_Kong"
   batch_size: 1
   dataloaders_num_workers: 0
   # token_nj: "flexible"
@@ -29,8 +29,22 @@ datamodule:
           data_dir: ${variables.audioset_path}
           dataset: "eval"
           json_path: "data/eval.scp"
+          speed_perturb: null
     test: 
       -  null
+  transform:
+    item:
+      train: null
+      val: null
+      test: null
+    batch_after:
+      train: null
+      val: null
+      test: null
+    batch_before:
+      train: null
+      val: null
+      test: null
   after_transform:
     train: null
     val: null
@@ -40,10 +54,12 @@ datamodule:
       batch_size: ${variables.batch_size}
       num_workers: ${variables.dataloaders_num_workers}
       shuffle: True
+      drop_last: true
     val:
       batch_size: ${variables.batch_size}
       num_workers: ${variables.dataloaders_num_workers}
       shuffle: False
+      drop_last: true
   collect_fns:
     train:
       pad_choices: ['pad', 'onehot']
@@ -53,10 +69,10 @@ datamodule:
       pad_choices: ['pad', 'onehot']
 
 module:
-  select: "AMINO.modules.classifier:AMINO_CLASSIFIER"
+  select: "AMINO.modules.enc_decs:AMINO_ENC_DECS"
   conf:
     net:
-      select: "AMINO.modules.nets.classifier:AMINO_CLASSIFIER"
+      select: "AMINO.modules.nets.enc_decs:AMINO_ENC_DECS"
       conf:
         encoder:
           select: "AMINO.modules.nets.encoder:HUGGINGFACE_WAV2VEC2"
@@ -66,7 +82,7 @@ module:
             from_pretrained_num_hidden_layers: 3
         decoders:
           classifier:
-            select: "AMINO.modules.nets.classifier:AMINO_GP_DECODER"
+            select: "AMINO.modules.nets.decoder:AMINO_GP_DECODER"
             conf:
               buncher:
                 select: "AMINO.modules.nets.buncher:SIMPLE_LINEAR_BUNCHER"
@@ -77,28 +93,29 @@ module:
                 select: "AMINO.modules.nets.pooler:SIMPLE_POOLER"
                 conf:
                   pooling_method: "mean"
+    optim:
+      select: "torch.optim:Adam"
+      conf:
+        lr: 0.01
     scheduler:
       select: "AMINO.modules.scheduler:WarmupLR"
       conf:
         warmup_steps: 2000
     losses:
-      net:
+      nets:
         classifier:
-          select: "AMINO.modules.label_smoothing_loss:LABEL_SMOOTHING_LOSS"
+          select: "AMINO.modules.loss:LABEL_SMOOTHING_LOSS"
           conf:
             size: ${pipeline_size.num_classes}
             smoothing: 0.0
-      weight:
+      weights:
         classifier: 1.0
-
-trainer:
-  gpus:
-    - 0
-    - 1
-  auto_scale_batch_size: null
-  log_every_n_steps: 1
-  strategy: "ddp"
-  limit_train_batches: 5
+    metrics:
+      classifier:
+        acc:
+          select: "torchmetrics:Accuracy"
+          conf:
+            top_k: 1
 
 callbacks:
 - select: pytorch_lightning.callbacks.progress.tqdm_progress:TQDMProgressBar
@@ -126,3 +143,71 @@ callbacks:
 - select: pytorch_lightning.callbacks:ModelSummary
   conf:
     max_depth: 3
+
+trainer:
+  accelerator: null
+  accumulate_grad_batches: null
+  amp_backend: native
+  amp_level: null
+  auto_lr_find: false
+  auto_scale_batch_size: false
+  auto_select_gpus: false
+  benchmark: false
+  enable_checkpointing: true
+  check_val_every_n_epoch: 1
+  default_root_dir: null
+  detect_anomaly: false
+  deterministic: false
+  devices: null
+  fast_dev_run: false
+  gpus: null
+  gradient_clip_val: null
+  gradient_clip_algorithm: null
+  limit_train_batches: 1.0
+  limit_val_batches: 1.0
+  limit_test_batches: 1.0
+  limit_predict_batches: 1.0
+  log_every_n_steps: 1
+  enable_progress_bar: true
+  profiler: null
+  overfit_batches: 0.0
+  precision: 32
+  max_epochs: null
+  min_epochs: null
+  max_steps: -1
+  min_steps: null
+  max_time: null
+  num_nodes: 1
+  num_processes: 1
+  num_sanity_val_steps: 2
+  reload_dataloaders_every_n_epochs: 0
+  replace_sampler_ddp: true
+  strategy: "ddp"
+  sync_batchnorm: false
+  terminate_on_nan: null
+  tpu_cores: null
+  ipus: null
+  track_grad_norm: -1
+  val_check_interval: 1.0
+  weights_save_path: null
+  move_metrics_to_cpu: false
+  multiple_trainloader_mode: max_size_cycle
+
+loggers:
+- select: pytorch_lightning.loggers:TensorBoardLogger
+  conf:
+    save_dir: ${expbase.tensorboard}/${hydra:job.name}
+- select: pytorch_lightning.loggers.wandb:WandbLogger
+  conf:
+    name: ${hydra:job.name}
+    save_dir: null
+    project: AMINO
+    log_model: false
+
+expbase:
+  exp: exp
+  tensorboard: tensorboard
+  wandb: wandb
+  neptune: neptune
+  seed: 777
+  checkpoint: null

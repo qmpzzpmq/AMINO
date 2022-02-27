@@ -87,3 +87,13 @@ class AMINOPadCollate(MulPadCollate):
             'feature': {'data': datas[0], 'len': datas_len[0]},
             'label': {'data': datas[1], 'len': datas_len[1]},
         }
+
+def get_auto_batch_size(module, datamodule, trainer):
+        datamodule.batch_size = datamodule.datamodule_conf[
+            'dataloaders']['train']['batch_size']
+        result = trainer.tune(
+            module,
+            datamodule=datamodule,
+        )
+        del datamodule.batch_size
+        return result["scale_batch_size"]

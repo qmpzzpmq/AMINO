@@ -2,6 +2,7 @@ import logging
 
 import torch
 import torch.utils.data as tdata
+import torch.nn as nn
 import pytorch_lightning as pl
 
 from AMINO.datamodule.preprocess import init_preporcesses
@@ -66,7 +67,8 @@ class AMINODataModule(pl.LightningDataModule):
                     self.transform['batch_after'][dataset_name] = self.preprocess_get(
                         'batch_after', dataset_name
                     )
-        super().prepare_data()
+                    self.transform2device[dataset_name] = False
+        super().setup()
     
     def get_num_classes(self):
         if hasattr(self, "num_classes"):
@@ -145,6 +147,7 @@ class AMINODataModule(pl.LightningDataModule):
             return None
 
     # this bug fix: when pytorch_lightning > 1.5
+    # if pytorch_lightning < 1.5 using this code
     # def on_before_batch_transfer(self, batch, dataloader_idx):
     #     if type(self.trainer.accelerator) == pl.accelerators.cpu.CPUAccelerator:
     #         print("0")
@@ -153,41 +156,36 @@ class AMINODataModule(pl.LightningDataModule):
     #     return batch
 
     def on_after_batch_transfer(self, batch, dataloader_idx):
-        if self.trainer.training \
-                and self.transform['batch_after'].get('train', None) is not None:
+        if self.trainer.training :
             return self.batch_transform('batch_after', 'train', batch)
-        elif (self.trainer.validating or self.trainer.sanity_checking) \
-                and self.transform['batch_after'].get('val', None) is not None:
+        elif (self.trainer.validating or self.trainer.sanity_checking):
             return self.batch_transform('batch_after', 'val', batch)
-        elif self.trainer.testing \
-                and self.transform['batch_after'].get('test', None) is not None:
+        elif self.trainer.testing:
             return self.batch_transform('batch_after', 'test', batch)
-        elif self.trainer.predicting \
-                and self.transform['batch_after'].get('predict', None) is not None:
+        elif self.trainer.predicting :
             return self.batch_transform('batch_after', 'predict', batch)
         return batch
 
     def batch_transform(self, position, key, batch):
-        if not self.transform2device[position][key]:
+        if not self.transform2device[key]:
             self.transform[position][key] = \
                 self.transform[position][key].to(
                     batch['feature']['data'].device
                 )
+            self.transform2device[key] = True
         batch = self.transform[position][key](batch)
         return batch
 
     def preprocess_get(self, position, key):
-        if position in self.datamodule_conf and \
-                key in self.datamodule_conf[position]:
+        if position in self.datamodule_conf["transform"] and \
+                key in self.datamodule_conf["transform"][position]:
             preprocesses = init_list_object(
                 self.datamodule_conf["transform"][position][key]
             )
-            return torch.nn.Sequential(*preprocesses) if preprocesses is not None else None
-            # return init_preporcesses(
-            #     self.datamodule_conf[position][key],
-            # )
+            return torch.nn.Sequential(*preprocesses) \
+                if preprocesses is not None else nn.Identity()
         else:
-            return None
+            return nn.Identity()
 
     def tesrdown(self):
         super().teardown()
