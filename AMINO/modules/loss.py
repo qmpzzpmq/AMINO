@@ -89,7 +89,8 @@ class AMINO_LOSSES(nn.Module):
         self.nets = nn.ModuleDict(self.nets)
         self.weights = dict()
         for k, v in weights.items():
-            self.weights[k] = torch.tensor(v, requires_grad=False)
+            self.weights[k] = nn.Parameter(torch.tensor(v), requires_grad=False)
+        self.weights = nn.ParameterDict(self.weights)
 
     def forward(self, pred_dict, target_dict, len_dict):
         loss_dict = dict()

@@ -87,7 +87,7 @@ module:
               buncher:
                 select: "AMINO.modules.nets.buncher:SIMPLE_LINEAR_BUNCHER"
                 conf:
-                  num_hidden: 768
+                  hidden_dims: [768]
                   num_classes: ${pipeline_size.num_classes}
               pooler:
                 select: "AMINO.modules.nets.pooler:SIMPLE_POOLER"

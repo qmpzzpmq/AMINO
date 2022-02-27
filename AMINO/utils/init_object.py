@@ -6,6 +6,8 @@ def init_object(conf):
     return real_obj
 
 def init_list_object(confs):
+    if confs is None:
+        return None
     out_list = []
     for conf in confs:
         if conf is None:
