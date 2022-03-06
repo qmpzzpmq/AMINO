@@ -141,4 +141,24 @@ class AMINO_ENC_DECS(AMINO_MODULE):
             check_result = total_check(batch, dim=2)
             save_error_tesnsor(batch, os.getcwd())
             return None
-        
+
+class AMINO_WAC2VEC_ENC_DECS(AMINO_ENC_DECS):
+    def batch2loss(self, batch):
+        wav2vec2_loss, casual_output = self.net(
+            batch['feature']['data'],
+            batch['feature']['len'],
+        )
+        feature, feature_len, pred_dict, pred_len_dict = casual_output
+        loss_dict = self.losses(
+            pred_dict,
+            {
+                "classifier": batch['label']['data'],
+                "autoencoder": feature,
+            },
+            {
+                "classifier": batch["label"]["len"].sum(),
+                "autoencoder": batch['feature']['len'].sum(),
+            },
+        )
+        loss_dict["wav2vec2"] = wav2vec2_loss
+        return loss_dict, feature, pred_dict, pred_len_dict

@@ -27,3 +27,16 @@ class AMINO_ENC_DECS(nn.Module):
             ys_dict[key] = ys
             ys_len_dict[key] = ys_len
         return zs, zs_len, ys_dict, ys_len_dict
+
+class AMINO_WAC2VEC_ENC_DECS(AMINO_ENC_DECS):
+    def forward(self, xs, xs_len):
+        # xs: (B, T, F)
+        loss, casual_output = self.encoder(xs, xs_len)
+        zs, zs_len, hs, hs_len = casual_output
+        ys_dict = dict()
+        ys_len_dict = dict()
+        for key, decoder in self.decoders.items():
+            ys, ys_len = decoder(hs, hs_len)
+            ys_dict[key] = ys
+            ys_len_dict[key] = ys_len
+        return loss, (zs, zs_len, ys_dict, ys_len_dict)

@@ -10,6 +10,7 @@ import torchaudio
 import torch
 import torch.nn as nn
 import transformers
+from transformers.models.wav2vec2.modeling_wav2vec2 import _compute_mask_indices
 
 from AMINO.modules.nets.transformer.embedding import PositionalEncoding
 from AMINO.modules.nets.transformer.embedding import RelPositionalEncoding
@@ -173,18 +174,23 @@ class HUGGINGFACE_WAV2VEC2(nn.Module):
         },
         from_pretrained="facebook/wav2vec2-base", # "facebook/wav2vec2-base-960h",
         from_pretrained_num_hidden_layers=3,
+        quantizerVQ_topping=False,
     ):
         assert (config is not None) or (from_pretrained is not None), \
             f"config and from pretrained both is none"
         super().__init__()
+        model_class = transformers.Wav2Vec2ForPreTraining \
+            if quantizerVQ_topping else transformers.Wav2Vec2Model
+        
         if from_pretrained is not None:
             cache_dir = hydra.utils.to_absolute_path("../../.HF_CACHE")
             logging.info(
                 f"using dir {cache_dir} as Hugging Face cache dir"
             )
-            pretrain_model = transformers.Wav2Vec2Model.from_pretrained(
+            pretrain_model = model_class.from_pretrained(
                 from_pretrained, cache_dir=cache_dir,
             )
+
         if pretrain_model is not None and config is None:
             pconfig = pretrain_model.config.to_dict()
             num_hidden_layers = pconfig["num_hidden_layers"]
@@ -211,18 +217,35 @@ class HUGGINGFACE_WAV2VEC2(nn.Module):
                 assert temp_pconfig == temp_config, \
                     "pretrain config should be same except 'num_hidden_layers'"
                 pretrain_model.encoder.layers = pretrain_model.encoder.layers[:num_hidden_layers]
-        model.train()
+        elif pretrain_model is None and config is not None:
+            model = model_class(config)
+
+        # model.train()
         self.net = model
     
-    def forward(self, xs, xs_len):
-        xs = xs.squeeze(1) # delete channel 
-        # masks = ~make_pad_mask(xs_lens).unsqueeze(1)
+    def forward(self, xs, xs_len, mask_time_indices=None):
+        xs = xs.squeeze(1) # delete channel
         masks = ~make_pad_mask(xs_len)
+        if mask_time_indices:
+            batch_size, raw_sequence_length = xs.shape
+            sequence_length = self.net._get_feat_extract_output_lengths(raw_sequence_length)
+            mask_time_indices = _compute_mask_indices((batch_size, sequence_length), mask_prob=0.2, mask_length=2)
+            mask_time_indices = mask_time_indices.to(
+                device=xs.device, dtype=torch.long
+            )
+       
         output = self.net(
             input_values = xs,
             attention_mask = masks,
+            mask_time_indices=mask_time_indices,
         )
-        return output.extract_features, xs_len, output.last_hidden_state, xs_len
+
+        if mask_time_indices:
+            return output.loss, (
+                output.extract_features, xs_len, output.last_hidden_state, xs_len
+            )
+        else:
+            return output.extract_features, xs_len, output.last_hidden_state, xs_len
 
 class SIMPLE_LINEAR_ENCODER(nn.Module):
     def __init__(

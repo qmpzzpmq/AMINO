@@ -69,10 +69,10 @@ datamodule:
       pad_choices: ['pad', 'onehot']
 
 module:
-  select: "AMINO.modules.enc_decs:AMINO_ENC_DECS"
+  select: "AMINO.modules.enc_decs:AMINO_WAC2VEC_ENC_DECS"
   conf:
     net:
-      select: "AMINO.modules.nets.enc_decs:AMINO_ENC_DECS"
+      select: "AMINO.modules.nets.enc_decs:AMINO_WAC2VEC_ENC_DECS"
       conf:
         encoder:
           select: "AMINO.modules.nets.encoder:HUGGINGFACE_WAV2VEC2"
