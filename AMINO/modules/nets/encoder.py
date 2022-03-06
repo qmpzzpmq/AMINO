@@ -214,15 +214,15 @@ class HUGGINGFACE_WAV2VEC2(nn.Module):
         model.train()
         self.net = model
     
-    def forward(self, xs, xs_lens):
-        xs = xs.squeeze(1) # 4D -> 3D
+    def forward(self, xs, xs_len):
+        xs = xs.squeeze(1) # delete channel 
         # masks = ~make_pad_mask(xs_lens).unsqueeze(1)
-        masks = ~make_pad_mask(xs_lens)
+        masks = ~make_pad_mask(xs_len)
         output = self.net(
             input_values = xs,
             attention_mask = masks,
         )
-        return output.extract_features, xs_lens, output.last_hidden_state, xs_lens
+        return output.extract_features, xs_len, output.last_hidden_state, xs_len
 
 class SIMPLE_LINEAR_ENCODER(nn.Module):
     def __init__(

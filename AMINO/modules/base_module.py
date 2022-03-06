@@ -59,6 +59,18 @@ class AMINO_MODULE(pl.LightningModule):
     def configure_optimizers(self):
         return [self.optim], [self.scheduler]
 
+    def batch_select(self, batch, idx):
+        return {
+            "feature": {
+                "data": batch["feature"]["data"].select(0, idx).unsqueeze(0),
+                "len": batch["feature"]["len"].select(0, idx).unsqueeze(0),
+            },
+            "label": {
+                "data": batch["label"]["data"].select(0, idx).unsqueeze(0),
+                "len": batch["label"]["len"].select(0, idx).unsqueeze(0),
+            },
+        }
+
 class ADMOS_MODULE(AMINO_MODULE):
     def ADMOS_seperation(self, batch, seperation_dim=0):
         return ADMOS_seperation(batch, seperation_dim=seperation_dim)

@@ -9,4 +9,4 @@ conda install -n ${env_name} -y -c anaconda h5py && \
 source activate ${env_name} && \
 conda run -n ${env_name} which python && \
 conda run -n ${env_name} pip install -r requirements.txt && \
-echo "conda install successful"
+echo "install successful"

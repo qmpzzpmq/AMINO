@@ -121,18 +121,25 @@ class AMINODataModule(pl.LightningDataModule):
         if self.datasets[datasetname] is not None:
             dataset = self.datasets[datasetname]
             logging.info(
-                f"there are {len(dataset)} items in {datasetname} dataset"
+                f"{torch.distributed.get_rank()}| there are {len(dataset)} items in {datasetname} dataset"
             )
             dataloader_conf = self.datamodule_conf['dataloaders'][datasetname]
+            logging.info(
+                f"{torch.distributed.get_rank()}| replace_sampler_ddp: {self.replace_sampler_ddp}"
+            )
+            logging.info(
+                f"dist: {torch.distributed.get_rank()}/{torch.distributed.get_world_size()}"
+            )
             if not self.replace_sampler_ddp:
                 shuffle = True if datasetname == "train" else False
                 sampler = tdata.distributed.DistributedSampler(
                     dataset, shuffle = shuffle)
-                logging.info(f"sampler len: {len(sampler)}")
+                logging.info(f"{torch.distributed.get_rank()}| {datasetname} sampler len: {len(sampler)}")
                 dataloader_conf["shuffle"] = False
+                dataloader_conf["drop_last"] = False
             else:
                 sampler = None
-            logging.info(f"{datasetname} dataloader conf: {dataloader_conf}")
+            logging.info(f"{torch.distributed.get_rank()}| {datasetname} dataloader conf: {dataloader_conf}")
             dataloader = tdata.DataLoader(
                 dataset,
                 **dataloader_conf,
@@ -140,7 +147,7 @@ class AMINODataModule(pl.LightningDataModule):
                 sampler=sampler,
             )
             logging.info(
-                f"there are {len(dataloader)} batches in {datasetname} dataloader"
+                f"{torch.distributed.get_rank()}| there are {len(dataloader)} batches in {datasetname} dataloader"
             )
             return dataloader
         else:

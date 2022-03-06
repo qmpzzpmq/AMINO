@@ -1,4 +1,4 @@
-from nbformat import ValidationError
+# from nbformat import ValidationError
 import torch.nn as nn
 
 from AMINO.utils.init_object import init_object
@@ -48,5 +48,5 @@ class SIMPLE_LINEAR_AUTOENCODER_DECODER(
     ):
         super().__init__(feature_dim, hidden_dims, drop_out, act_fn)
 
-    def get_num_classes(self):
-        raise ValidationError("please use AMINO.modules.nets.buncher.SIMPLE_LINEAR_BUNCHER")
+    # def get_num_classes(self):
+    #     raise ValidationError("please use AMINO.modules.nets.buncher.SIMPLE_LINEAR_BUNCHER")

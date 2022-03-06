@@ -1,6 +1,6 @@
 undictify
-contiguous-params
 transformers==4.16
 setuptools==59.5.0
 datasets
 typeguard
+tfrecord

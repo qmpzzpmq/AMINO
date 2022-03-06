@@ -6,15 +6,18 @@ import csv
 import json
 import multiprocessing as mp
 import tempfile
+from abc import ABC
 
 from tqdm import tqdm
 import hydra
+import tfrecord
 
 import torchaudio
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 
-def load_wav_with_speed_resample(wav_file, speed, fs=None, start=0, end=-1):
+def load_wav(wav_file, start=0, end=-1):
     if start == 0 and end == -1:
         wav, sr = torchaudio.backend.sox_io_backend.load(wav_file)
     else:
@@ -25,15 +28,40 @@ def load_wav_with_speed_resample(wav_file, speed, fs=None, start=0, end=-1):
         wav, sr = torchaudio.backend.sox_io_backend.load(
             wav_file, frame_offset=frame_offset, num_frames=num_frames,
         )
+    return wav, sr
+
+def tensor_resample_speed(wav, speed, ori_fs, fs):
     effects = []
     if not (speed == 1.0):
         effects.append(['speed', str(speed)])
-    if (fs is not None) and (fs != sr):
+    if (fs is not None) and (fs != ori_fs):
         effects.append(['rate', str(fs)])
     if len(effects) > 0:
         wav, sr = torchaudio.sox_effects.apply_effects_tensor(
-            wav, sr, effects
+            wav, ori_fs, effects
         )
+    return wav
+
+class TENSOR_SPEED(nn.Module):
+    def __init__(
+        self,
+        speed_perturb=[1.0, 1.1, 0.9],
+        speed_perturb_weight=[1, 1, 1],
+    ):
+        self.speed_perturb = speed_perturb
+        self.speed_perturb_weight = speed_perturb_weight
+
+    def forward(self, feature):
+        speed = random.choices(
+            self.speed_perturb,
+            self.speed_perturb_weight,
+            k=1,
+        )[0] if self.speed_perturb is not None else 1.0
+        return tensor_resample_speed(feature, speed, 16000, 16000)
+
+def load_wav_with_speed_resample(wav_file, speed, fs=None, start=0, end=-1):
+    wav, sr = load_wav(wav_file, start, end)
+    wav = tensor_resample_speed(wav, speed, sr, fs)
     return wav, sr
 
 def toyadmos2_file_list_generator(
@@ -195,7 +223,7 @@ class AUDIO_CHANNEL_SELECT():
     def __call__(self, x):
         return x[self.mono_channel, :].unsqueeze(0)
 
-class AMINO_DATASET(torch.utils.data.Dataset):
+class AMINO_DATASET(ABC, torch.utils.data.Dataset):
     def __init__(
             self,
             fs=16000,
@@ -203,6 +231,7 @@ class AMINO_DATASET(torch.utils.data.Dataset):
             speed_perturb=[1.0, 1.1, 0.9],
             speed_perturb_weight=[1, 1, 1],
         ):
+        # no call super().__init__ since ABC
         self.fs = fs
         self.speed_perturb = speed_perturb
         self.speed_perturb_weight = speed_perturb_weight
@@ -227,7 +256,7 @@ class AMINO_DATASET(torch.utils.data.Dataset):
     def set_preprocesses(self, preprocesses_func):
         self.preprocess_func = preprocesses_func
 
-    def standard_read(self, path, start=0, end=-1):
+    def standard_read(self, path, start=0, end=-1, min_len=8000):
         speed = random.choices(
             self.speed_perturb,
             self.speed_perturb_weight,
@@ -236,6 +265,10 @@ class AMINO_DATASET(torch.utils.data.Dataset):
         data, fs = load_wav_with_speed_resample(
             path, speed, self.fs, start, end,
         )
+        if data.size(-1) < min_len:
+            pad_len = min_len - data.size(-1)
+            logging.debug(f"pad data with pad size {pad_len}")
+            data = F.pad(data, (0, pad_len), "constant", 0)
         try:
             data = self.preprocess_func(data)
         except Exception as e:
@@ -286,12 +319,22 @@ class AMINO_ConcatDataset(torch.utils.data.ConcatDataset):
             return None
         return num_classes.max()
 
-    def dump(self, path, data_list=None):
+    def dump(self, path, data_list=None, format=None):
         if data_list is None:
             data_list = list()
             for dataset in self.datasets:
                 data_list += dataset.data_list
 
+        if format is None:
+            format = os.path.splittext(path)[1]
+            assert format in [".json", ".tfrecord"]
+            format = format[1:]
+        if format == "json":
+            self.dump_json(path, data_list)
+        if format == "tfrecord":
+            self.dump_tfrecord(path, data_list)
+
+    def dump_json(self, path, data_list):
         with open(path, "w") as fw:
             for item in data_list:
                 if type(item["token"]) == torch.Tensor:
@@ -362,7 +405,7 @@ class AUDIOSET_DATASET(AMINO_DATASET):
     def __init__(
         self,
         data_dir,
-        json_path,
+        dump_path,
         dataset="balanced_train",
         mono_channel="mean",
         fs=16000,
@@ -371,14 +414,14 @@ class AUDIOSET_DATASET(AMINO_DATASET):
         token_nj=1,
     ):
         super().__init__(fs, mono_channel, speed_perturb, speed_perturb_weight)
-        self.json_path = hydra.utils.to_absolute_path(json_path)
+        self.dump_path = hydra.utils.to_absolute_path(dump_path)
         label_list = audioset_csv_reader(
             os.path.join(data_dir, "metadata", "class_labels_indices.csv"),
             ["index", "mid", "display_name"],
         )
-        label_dict = audioset_label_dict_builder(label_list)
-        self.num_classes = len(label_dict.values())
-        if os.path.isfile(self.json_path):
+        self.label_dict = audioset_label_dict_builder(label_list)
+        self.num_classes = len(self.label_dict.values())
+        if os.path.isfile(self.dump_path):
             return
         audio_dir = os.path.join(data_dir, "audios")
         logging.debug(f"audioset {dataset} dataset prepare start")
@@ -404,7 +447,7 @@ class AUDIOSET_DATASET(AMINO_DATASET):
             """)
         assert os.path.isdir(segments_dir), \
             "the segment dir {segments_dir} donesn't exist"
-        data_list = audioset_csv_reader(
+        self.data_list = audioset_csv_reader(
             file_name,
             ["YTID", "start_seconds", "end_seconds", "positive_labels"],
         )
@@ -415,19 +458,16 @@ class AUDIOSET_DATASET(AMINO_DATASET):
             token_nj = int(mp.cpu_count() / 2 )
         logging.info(f"{dataset} dataset start token with {token_nj} nj")
         self.token_nj = token_nj
-        self.data_list = self.data_list
-        self.label_dict = label_dict
         self.segments_dir = segments_dir
         self.subdir = subdir
-
         logging.info(
             f"audioset {dataset} dataset with {len(self.data_list)} item prepare done"
         )
 
     def prepare_data(self):
-        if os.path.isfile(self.json_path):
+        if os.path.isfile(self.dump_path):
             return 
-        if self.token_njtoken_nj > 1:
+        if self.token_nj > 1:
             with mp.Pool(
                     processes=self.token_nj,
                     initializer=tqdm.set_lock, initargs=(tqdm.get_lock(),)
@@ -444,18 +484,20 @@ class AUDIOSET_DATASET(AMINO_DATASET):
                 ]
 
                 pool.starmap(audioset_tokener_write, tasks)
-                file_merge([x[-1] for x in tasks], self.json_path)
-                self.data_list = super().load(self.json_path)
+                file_merge([x[-1] for x in tasks], self.dump_path)
+                self.data_list = super().load(self.dump_path)
         else:
             self.data_list = audioset_tokener_write(
                 self.data_list, self.label_dict, self.segments_dir, self.subdir,
-                {"position": 0, "disable": False}, self.json_path
+                {"position": 0, "disable": False}, self.dump_path
             )
+        del self.label_dict, self.segments_dir, self.subdir
         
     def setup(self):
         if not hasattr(self, "data_list"):
-            logging.info(f"load json from {self.json_path}")
-            self.data_list = super().load(self.json_path)
+            logging.info(f"load json from {self.dump_path}")
+            self.data_list = super().load(self.dump_path)
+        del self.dump_path
 
     def __len__(self):
         return len(self.data_list)
@@ -477,3 +519,64 @@ class AUDIOSET_DATASET(AMINO_DATASET):
     
     def get_num_classes(self):
         return self.num_classes
+    
+    def dump_tfrecord(self, path, data_list):
+        with tfrecord.TFRecordWriter(path) as fw:
+            for item in data_list:
+                if type(item["token"]) == torch.Tensor:
+                    item["token"] = item["token"].tolist()
+                data, fs = load_wav(item["pat"])
+                fw.write(
+                    {"fs": fs},
+                    {
+                        "feature": (data.cpu().tolist(), float),
+                        "token": (item["token"].cpu().tolist(), int)
+                    },
+                )
+
+class AUDIOSET_TFRecordDataset(torch.utils.data.IterableDataset):
+    def __init__(
+            self,
+            data_path,
+            speed_perturb=[1.0, 1.1, 0.9],
+            speed_perturb_weight=[1, 1, 1],
+        ):
+        self.speed_perturb = speed_perturb
+        self.speed_perturb_weight = speed_perturb_weight
+        self.data_path = data_path
+        self.description = {"fs": "int"}
+        self.sequence_description = {"feature": "float ", "token": "int"}
+        self.transform = TENSOR_SPEED(
+                speed_perturb=self.speed_perturb,
+                speed_perturb_weight=self.speed_perturb_weight,
+        ) if speed_perturb is not None else None
+        self.load(self.data_path)
+
+    def __iter__(self):
+        return self.it
+
+    def get_num_classes(self):
+        return self.num_classes
+
+    def load(self, data_path=None):
+        if data_path is None:
+            data_path = self.data_path
+        data_path = hydra.utils.to_absolute_path(data_path)
+        self.it = tfrecord.reader.tfrecord_loader(
+            data_path=data_path,
+            description=self.description,
+            sequence_description=self.sequence_description,
+        )
+        if self.transform:
+            it = map(self.transform, it)
+        meta = next(self.it)
+        self.num_classes = meta["num_classes"]
+
+    def dump(self, data_path):
+        raise TypeError("no need for TFRecordDataset")
+
+    def prepare_data(self):
+        pass
+
+    def setup(self):
+        pass

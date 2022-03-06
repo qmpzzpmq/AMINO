@@ -57,7 +57,7 @@ class MulPadCollate(object):
         for i, pad_choice in enumerate(self.pad_choices):
             each_data = [x[i] for x in batch]
             if pad_choice == "pad":
-                each_data_len = [x.shape[self.dim] for x in each_data]
+                each_data_len = [x.size(self.dim) for x in each_data]
                 max_len = max(each_data_len)
                 padded_each_data = [pad_tensor(x, max_len, self.dim) for x in each_data]
                 datas.append(torch.stack(padded_each_data, dim=0))

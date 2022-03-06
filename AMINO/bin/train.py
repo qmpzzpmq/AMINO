@@ -54,7 +54,9 @@ def main(cfg) -> None:
     assert cfg.trainer.strategy.startswith("ddp")
 
     if not OmegaConf.select(cfg, "expbase.seed"):
-        pl.utilities.seed.seed_everything(cfg["expbase"]["seed"])
+        seed = cfg["expbase"]["seed"]
+        logging.info(f"seed all seed to {seed}")
+        pl.utilities.seed.seed_everything(seed)
     datamodule.set_replace_sampler_ddp(cfg.trainer.replace_sampler_ddp)
 
     # save config and start train

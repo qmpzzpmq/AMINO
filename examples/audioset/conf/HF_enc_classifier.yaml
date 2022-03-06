@@ -21,14 +21,14 @@ datamodule:
           data_dir: ${variables.audioset_path}
           # dataset: "balanced_train"
           dataset: "unbalanced_train"
-          json_path: "data/unbalanced_train.scp"
+          dump_path: "data/unbalanced_train.scp"
           token_nj: ${variables.token_nj}
     val:
       - select: "AMINO.datamodule.datasets:AUDIOSET_DATASET"
         conf:
           data_dir: ${variables.audioset_path}
           dataset: "eval"
-          json_path: "data/eval.scp"
+          dump_path: "data/eval.scp"
           speed_perturb: null
     test: 
       -  null

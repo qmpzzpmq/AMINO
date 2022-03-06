@@ -41,14 +41,40 @@ class AMINO_ENC_DECS(AMINO_MODULE):
         if batch is None:
             return None
         try:
+            # temp for debug
             loss_dict, feature, pred_dict, pred_len_dict = self.batch2loss(batch)
-        except Exception as e:
+            # logging.info(
+            #     f"{torch.distributed.get_rank()}| train batch idx {batch_idx} get loss {loss_dict}"
+            # )
+        except Exception as e1:
             with torch.no_grad():
-                logging.warning(f"something wrong: {e}")
+                logging.warning(f"something wrong: {e1}")
                 check_result = total_check(batch, dim=1)
                 save_error_tesnsor(batch, os.getcwd())
                 torch.cuda.empty_cache()
-                return None
+            logging.warning("batch failed, try to use single item as one batch")
+            batch_size = batch['feature']['data'].size(0)
+            for idx in range(batch_size):
+                try:
+                    loss_dict, feature, pred_dict, pred_len_dict = self.batch2loss(
+                        self.batch_select(batch, idx)
+                    )
+                except Exception as e2:
+                    logging.warning(f"{idx}item as batch failed with {e2}")
+                else:
+                    logging.warning(
+                        f"{idx}item as batch succeed, loss: {loss_dict}"
+                    )
+                    return {'loss': loss_dict['total']}
+            raise ValueError("all item in this batch failed")
+            # https://github.com/PyTorchLightning/pytorch-lightning/issues/5243
+            # return None
+            # https://github.com/pytorch/pytorch/issues/23425
+            # return {
+            #     'loss': torch.tensor(
+            #         0.0, device=batch['label']['data'].device,
+            #     )
+            # }
         for k, v in loss_dict.items():
             self.log(
                 f'loss_{k}', v,
