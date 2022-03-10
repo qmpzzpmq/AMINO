@@ -54,6 +54,8 @@ class AMINO_MODULE(pl.LightningModule):
                 self.metrics[k1] = dict()
                 for k2, v2 in v1.items():
                     self.metrics[k1][k2] = init_object(v2)
+                self.metrics[k1] = nn.ModuleDict(self.metrics[k1])
+            self.metrics = nn.ModuleDict(self.metrics)
         self.save_hyperparameters()
 
     def configure_optimizers(self):

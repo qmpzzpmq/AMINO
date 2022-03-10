@@ -1,0 +1,92 @@
+apiVersion: "kubeflow.org/v1"
+kind: "PyTorchJob"
+metadata:
+  name: "charlie-pynn-amino-9layers"
+  namespace: "team"
+ 
+spec:
+  pytorchReplicaSpecs:
+    Master:
+      replicas: 1
+      imagePullPolicy: IfNotPresent
+      restartPolicy: Never
+      template:
+        metadata:
+          annotations:
+            sidecar.istio.io/inject: "false"
+          labels: 
+            app: pytorch-job-pynn-master
+        spec:
+          affinity:
+            podAntiAffinity:
+              preferredDuringSchedulingIgnoredDuringExecution:
+              - weight: 100
+                podAffinityTerm:
+                  labelSelector:
+                    matchExpressions:
+                    - key: app
+                      operator: In
+                      values:
+                      - pytorch-job-pynn
+                  topologyKey: "kubernetes.io/hostname"
+              - weight: 100
+                podAffinityTerm:
+                  labelSelector:
+                    matchExpressions:
+                    - key: app
+                      operator: In
+                      values:
+                      - pytorch-job-pynn-master
+                  topologyKey: "kubernetes.io/hostname"
+          volumes:
+          - name: share2
+            nfs:
+              path: /export/kites_team
+              server: 10.20.44.57
+          - name: audioset
+            nfs:
+              path: /export/kites_team/users/charlie/audioset/audioset_Kong
+              server: 10.20.44.57
+          - name: amino
+            nfs:
+              path: /export/kites_team/users/charlie/AMINO
+              server: 10.20.44.57
+          containers:
+            - name: pytorch
+              image: nvcr.io/nvidia/pytorch:21.08-py3
+              imagePullPolicy: IfNotPresent
+              command: [
+                  "/bin/bash", "-x", 
+                  "/AMINO/examples/audioset/k8s_run.sh"
+              ]
+              args: [
+                  "--audioset_path", "/audioset_Kong",
+                  "--gpus", "4"
+              ]
+              ports:
+              - containerPort: 24456
+                name: pytorchjob-port
+              resources:
+                limits:
+                    nvidia.com/gpu: 4 # requesting 1 GPU
+              volumeMounts:
+              - mountPath: /share2
+                name: share2
+              - mountPath: /audioset_Kong
+                name: audioset
+              - mountPath: /AMINO
+                name: amino
+              env:
+              - name: WANDB_API_KEY
+                value: 6e042cf1f1fe7aaacda8327dc959172c4a0aa57a
+              - name: LOGNAME
+                value: haoyu.tang
+              - name: NCCL_IB_DISABLE
+                value: "0"
+              - name: NCCL_IB_CUDA_SUPPORT
+                value: "1"
+              - name: NCCL_NET_GDR_LEVEL
+                value: "2"
+          imagePullSecrets:
+          - name: regcred
+

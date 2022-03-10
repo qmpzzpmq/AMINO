@@ -19,11 +19,7 @@ class AMINO_ENC_DECS(AMINO_MODULE):
             if self.losses:
                 assert list(self.losses.nets.keys()) == list(self.net.decoders.keys())
 
-    def batch2loss(self, batch):
-        feature, feature_len, pred_dict, pred_len_dict = self.net(
-            batch['feature']['data'],
-            batch['feature']['len']
-        )
+    def compute_loss(self, batch, feature, feature_len, pred_dict, pred_len_dict):
         loss_dict = self.losses(
             pred_dict,
             {
@@ -35,14 +31,17 @@ class AMINO_ENC_DECS(AMINO_MODULE):
                 "autoencoder": batch['feature']['len'].sum(),
             },
         )
-        return loss_dict, feature, pred_dict, pred_len_dict
+        return loss_dict
 
     def training_step(self, batch, batch_idx):
-        if batch is None:
-            return None
+        # if batch is None:
+        #     return None
         try:
-            # temp for debug
-            loss_dict, feature, pred_dict, pred_len_dict = self.batch2loss(batch)
+            feature, feature_len, pred_dict, pred_len_dict = self.net(
+                batch['feature']['data'],
+                batch['feature']['len']
+            )
+            loss_dict = self.compute_loss(batch, feature, feature_len, pred_dict, pred_len_dict)
             # logging.info(
             #     f"{torch.distributed.get_rank()}| train batch idx {batch_idx} get loss {loss_dict}"
             # )
@@ -84,52 +83,49 @@ class AMINO_ENC_DECS(AMINO_MODULE):
         return {'loss': loss_dict['total']}
 
     def validation_step(self, batch, batch_idx):
-        if batch is None:
-            return None
-        loss_dict, feature, pred_dict, pred_len_dict = self.batch2loss(batch)
-        # try:
-        #     loss_dict, feature, pred_dict, pred_len_dict = self.batch2loss(batch)
-        # except Exception as e:
-        #     logging.warning(f"something wrong: {e}")
-        #     check_result = total_check(batch, dim=2)
-        #     save_error_tesnsor(batch, os.getcwd())
+        # if batch is None:
         #     return None
+        feature, feature_len, pred_dict, pred_len_dict = self.net(
+            batch['feature']['data'],
+            batch['feature']['len']
+        )
+        loss_dict = self.compute_loss(batch, feature, feature_len, pred_dict, pred_len_dict)
         for k, v in loss_dict.items():
             self.log(
                 f"val_loss_{k}", v,
                 on_step=True, on_epoch=True,
                 prog_bar=True, logger=True,
             )
+        metric_dict = self.compute_metrics(
+            batch, feature, feature_len, pred_dict, pred_len_dict,
+        )
+        for k, v in metric_dict.items():
+            self.log(
+                f"val_metric_{k}", v,
+                on_step=True, on_epoch=True,
+                prog_bar=True, logger=True,
+            )
 
-    def log_metrics(
+    def compute_metrics(
             self,
-            batch,
+            batch=None,
             feature=None,
             feature_len=None,
             pred_dict=None,
             pred_len_dict=None,
         ):
-        if not (
-                (pred_dict is None) or 
-                (pred_len_dict is None) or 
-                (feature is None) or 
-                (feature_len is None)
-            ):
-            feature, feature_len, pred_dict, pred_len_dict = self.net(
-                batch['feature']['data'].squeeze(1),
-                batch['feature']['len']
-            )
-        for pred_name, pred_obj in pred_dict.keys():
+        metric_dict = dict()
+        for pred_name, pred_obj in pred_dict.items():
             if pred_name == "classifier":
-                for metric_name, metric_obj \
-                        in self.metrics["classifier"].items():
-                    metric_obj(pred_obj, batch['label']['data'])
-                    self.log(f"{pred_name}-{metric_name}", metric_obj)
+                target = batch['label']['data']
             elif pred_name == "autoencoder":
-                for metric_name, metric_obj \
-                        in self.metrics["classifier"].items():
-                    metric_obj(pred_obj, batch['label']['data'])
-                    self.log(f"{pred_name}-{metric_name}", metric_obj)
+                target = batch['feature']['data']
+            for metric_name, metric_obj \
+                    in self.metrics[pred_name].items():
+                metric_obj(pred_obj, target)
+                metric_dict[f"{pred_name}-{metric_name}"] = metric_obj
+                # self.log(f"{pred_name}-{metric_name}", metric_obj)
+        return metric_dict
 
     def test_step(self, batch, batch_idx):
         if batch is None:

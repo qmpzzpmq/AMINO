@@ -279,51 +279,9 @@ class AMINO_DATASET(ABC, torch.utils.data.Dataset):
             return data
         return data
 
-    def dump(self, path, data_list=None):
-        if data_list is None:
-            data_list = self.data_list
-
-        with open(path, "w") as fw:
-            for item in data_list:
-                if type(item["token"]) == torch.Tensor:
-                    item["token"] = item["token"].tolist()
-                fw.write(f"{json.dumps(item)}\n")
-
-    def load(self, path):
-        data_list = []
-        for line in open(path, "r"):
-            item = json.loads(line.strip())
-            if not (("path" in item) and ("token" in item)):
-                continue
-            if type(item["token"]) == list:
-                item["token"] = torch.tensor(item["token"])
-            data_list.append(item)
-        return data_list
-
-class AMINO_ConcatDataset(torch.utils.data.ConcatDataset):
-    def set_preprocesses(self, preprocesses_func):
-        for i in range(len(self.datasets)):
-            self.datasets[i].preprocess_func = preprocesses_func
-
-    def get_num_classes(self):
-        try:
-            num_classes = torch.tensor(
-                [dataset.get_num_classes() for dataset in self.datasets]
-            )
-            assert num_classes.min() == num_classes.max(), \
-                f"the number of classes in each dataset is not same"
-        except Exception as e:
-            logging.warning(
-                f"Something wrong with get_num_classes, return None"
-            )
-            return None
-        return num_classes.max()
-
     def dump(self, path, data_list=None, format=None):
         if data_list is None:
-            data_list = list()
-            for dataset in self.datasets:
-                data_list += dataset.data_list
+            data_list = self.data_list
 
         if format is None:
             format = os.path.splittext(path)[1]
@@ -342,15 +300,34 @@ class AMINO_ConcatDataset(torch.utils.data.ConcatDataset):
                 fw.write(f"{json.dumps(item)}\n")
 
     def load(self, path):
-        list = []
+        data_list = []
         for line in open(path, "r"):
             item = json.loads(line.strip())
             if not (("path" in item) and ("token" in item)):
                 continue
             if type(item["token"]) == list:
-                item["token"] == torch.tensor(item["token"])
-            list.append(item)
-        return list
+                item["token"] = torch.tensor(item["token"])
+            data_list.append(item)
+        return data_list
+
+class AMINO_ConcatDataset(torch.utils.data.ConcatDataset, AMINO_DATASET):
+    def set_preprocesses(self, preprocesses_func):
+        for i in range(len(self.datasets)):
+            self.datasets[i].preprocess_func = preprocesses_func
+
+    def get_num_classes(self):
+        try:
+            num_classes = torch.tensor(
+                [dataset.get_num_classes() for dataset in self.datasets]
+            )
+            assert num_classes.min() == num_classes.max(), \
+                f"the number of classes in each dataset is not same"
+        except Exception as e:
+            logging.warning(
+                f"Something wrong with get_num_classes, return None"
+            )
+            return None
+        return num_classes.max()
     
     def prepare_data(self):
         for dataset in self.datasets:
@@ -521,18 +498,24 @@ class AUDIOSET_DATASET(AMINO_DATASET):
         return self.num_classes
     
     def dump_tfrecord(self, path, data_list):
-        with tfrecord.TFRecordWriter(path) as fw:
-            for item in data_list:
-                if type(item["token"]) == torch.Tensor:
-                    item["token"] = item["token"].tolist()
-                data, fs = load_wav(item["pat"])
-                fw.write(
-                    {"fs": fs},
-                    {
-                        "feature": (data.cpu().tolist(), float),
-                        "token": (item["token"].cpu().tolist(), int)
-                    },
-                )
+        fw = tfrecord.TFRecordWriter(path)
+        logging.debug(f"num_classes: {self.num_classes}")
+        fw.write({
+            "num_classes": (int(self.num_classes), "int"),
+        })
+        for item in tqdm(data_list):
+            data, fs = load_wav(item["path"])
+            fw.write(
+                {
+                    "fs": (int(fs), "int"),
+                    "num_channels": (int(data.size(0)), "int"),
+                },
+                {
+                    "feature": (data.flatten().cpu().tolist(), "float"),
+                    "token": (item["token"].flatten().cpu().tolist(), "int"),
+                },
+            )
+        fw.close()
 
 class AUDIOSET_TFRecordDataset(torch.utils.data.IterableDataset):
     def __init__(

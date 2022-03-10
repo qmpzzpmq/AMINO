@@ -11,6 +11,7 @@ from AMINO.datamodule.datamodule import AMINODataModule
 from AMINO.utils.init_object import init_object, init_list_object
 from AMINO.utils.configs import cfg_process, is_classifier
 from AMINO.utils.datamodule import get_auto_batch_size
+from AMINO.tools.running_test import DDP_test
 
 @hydra.main(
     config_path=os.path.join(os.getcwd(), 'conf'),

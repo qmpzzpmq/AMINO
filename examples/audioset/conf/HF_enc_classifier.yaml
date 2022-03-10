@@ -1,5 +1,6 @@
 variables:
-  audioset_path: "/audioset_Kong"
+  # audioset_path: "/audioset_Kong"
+  audioset_path: "/share2/users/charlie/audioset/audioset_Kong"
   batch_size: 1
   dataloaders_num_workers: 0
   # token_nj: "flexible"
@@ -114,8 +115,8 @@ module:
       classifier:
         acc:
           select: "torchmetrics:Accuracy"
-          conf:
-            top_k: 1
+          conf: {}
+          #   top_k: 1
 
 callbacks:
 - select: pytorch_lightning.callbacks.progress.tqdm_progress:TQDMProgressBar

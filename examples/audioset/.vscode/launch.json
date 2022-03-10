@@ -40,12 +40,12 @@
             "justMyCode": true,
             "args": [
                 "--config-name", "HF_enc_classifier.yaml",
-                "hydra.job.name=HF_Num_layer-3_Train_Batch-100_Val_Batch-100",
+                "hydra.job.name=HF_Num_layer-3_Train_Batch-10_Val_Batch-10",
                 "++variables.dataloaders_num_workers=5",
                 "++variables.batch_size=10",
-                "++trainer.gpus='0,'",
-                "++trainer.limit_train_batches=100",
-                "++trainer.limit_val_batches=100",
+                "++trainer.gpus='1'",
+                "++trainer.limit_train_batches=10",
+                "++trainer.limit_val_batches=10",
                 "++module.conf.scheduler.conf.warmup_steps=30000",
                 "++module.conf.net.conf.encoder.conf.from_pretrained_num_hidden_layers=3",
             ],
@@ -53,7 +53,7 @@
                 "PYTHONPATH": "../..:${PYTHONPATH}",
                 "OC_CAUSE": "1",
                 "HYDRA_FULL_ERROR": "1",
-                "MASTER_PORT": "690838",
+                "MASTER_PORT": "6908",
             }
         },
         {
