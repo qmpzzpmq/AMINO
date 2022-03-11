@@ -11,12 +11,8 @@ from AMINO.datamodule.datamodule import AMINODataModule
 from AMINO.utils.init_object import init_object, init_list_object
 from AMINO.utils.configs import cfg_process, is_classifier
 from AMINO.utils.datamodule import get_auto_batch_size
-from AMINO.tools.running_test import DDP_test
 
-@hydra.main(
-    config_path=os.path.join(os.getcwd(), 'conf'),
-)
-def main(cfg) -> None:
+def common_prepare(cfg):
     # data prepare
     datamodule = AMINODataModule(cfg['datamodule'])
     # if issubclass(dynamic_import(cfg['module']['select']), AMINO_CLASSIFIER):
@@ -67,6 +63,13 @@ def main(cfg) -> None:
     logging.warning(
         f"start {hydra_config.job.name} job at dir {os.getcwd()}",
     )
+    return trainer, module, datamodule
+
+@hydra.main(
+    config_path=os.path.join(os.getcwd(), 'conf'),
+)
+def main(cfg) -> None:
+    trainer, module, datamodule = common_prepare(cfg)
     trainer.fit(
         module, datamodule=datamodule,
         ckpt_path=OmegaConf.select(cfg, "expbase.checkpoint")

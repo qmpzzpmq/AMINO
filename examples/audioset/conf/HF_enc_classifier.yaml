@@ -116,26 +116,31 @@ module:
         acc:
           select: "torchmetrics:Accuracy"
           conf: {}
-          #   top_k: 1
+        mAP:
+          select: "torchmetrics:AveragePrecision"
+          conf: {}
+        AUC:
+          select: "torchmetrics:AUC"
+          conf: {}
 
 callbacks:
 - select: pytorch_lightning.callbacks.progress.tqdm_progress:TQDMProgressBar
   conf:
     refresh_rate: 1
     process_position: 0
-# - select: pytorch_lightning.callbacks.model_checkpoint:ModelCheckpoint
-#   conf:
-#     filename: epoch{epoch}-val_loss_total_epoch{val_loss_total_epoch:.3f}
-#     monitor: val_loss_total_epoch
-#     save_last: true
-#     save_top_k: 5
-#     dirpath: checkpoint
-# - select: pytorch_lightning.callbacks.early_stopping:EarlyStopping
-#   conf:
-#     monitor: val_loss_total_epoch
-#     mode: min
-#     min_delta: 1.0e-06
-#     patience: 30
+- select: pytorch_lightning.callbacks.model_checkpoint:ModelCheckpoint
+  conf:
+    filename: epoch{epoch}-val_loss_total_epoch{val_loss_total_epoch:.3f}
+    monitor: val_loss_total_epoch
+    save_last: true
+    save_top_k: 5
+    dirpath: checkpoint
+- select: pytorch_lightning.callbacks.early_stopping:EarlyStopping
+  conf:
+    monitor: val_loss_total_epoch
+    mode: min
+    min_delta: 1.0e-06
+    patience: 30
 - select: pytorch_lightning.callbacks:DeviceStatsMonitor
   conf: {}
 - select: pytorch_lightning.callbacks.lr_monitor:LearningRateMonitor
