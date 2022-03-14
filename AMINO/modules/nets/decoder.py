@@ -1,8 +1,8 @@
-# from nbformat import ValidationError
 import torch.nn as nn
 
 from AMINO.utils.init_object import init_object
 from AMINO.modules.nets.buncher import SIMPLE_LINEAR_BUNCHER
+from AMINO.utils.mask import make_pad_mask
 
 class AMINO_CLASSIFIER(nn.Module):
     def get_num_classes(self):
@@ -50,3 +50,21 @@ class SIMPLE_LINEAR_AUTOENCODER_DECODER(
 
     # def get_num_classes(self):
     #     raise ValidationError("please use AMINO.modules.nets.buncher.SIMPLE_LINEAR_BUNCHER")
+
+# borrow idea from MAE
+class TRANSFORMER_ENCODER_AS_AUTTOENDER_DECODER(AMINO_AUTOENCODER_DECODER):
+    def __init__(
+        self, num_layers, d_model, nhead, dim_feedforward=2048, dropout=0.1, 
+    ):
+        encoder_layer = nn.TransformerEncoderLayer(
+            d_model=d_model,
+            nhead=nhead,
+            dim_feedforward=dim_feedforward,
+            dropout=dropout,
+        )
+        self.net = nn.TransformerEncoder(encoder_layer, num_layers=num_layers)
+
+    def forward(self, xs, xs_len):
+        masks = ~make_pad_mask(xs_len)
+        out = self.net(xs, masks)
+        return out, xs_len

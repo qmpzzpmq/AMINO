@@ -2,37 +2,7 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "train",
-            "type": "python",
-            "request": "launch",
-            "program": "AMINO/bin/train.py",
-            "console": "integratedTerminal",
-            "justMyCode": true,
-            "args": [
-                "--config-name",
-                "mel_classifier.yaml",
-                "hydra.job.name=test",
-                "++variables.dataloaders_num_workers=5",
-                "++variables.batch_size=32",
-                "++trainer.gpus='0,'",
-            ],
-            "env": {
-                "PYTHONPATH": "../..:${PYTHONPATH}",
-                "OC_CAUSE": "1",
-                "HYDRA_FULL_ERROR": "1",
-                "MASTER_PORT": "690838",
-            }
-        },
-        {
-            "name": "hugging_face test",
-            "type": "python",
-            "request": "launch",
-            "program": "hugging_face_test.py",
-            "console": "integratedTerminal",
-            "justMyCode": false,
-        },
-        {
-            "name": "hugging_face model",
+            "name": "wav2vec2 train",
             "type": "python",
             "request": "launch",
             "program": "AMINO/bin/train.py",
@@ -48,6 +18,33 @@
                 "++trainer.limit_val_batches=10",
                 "++module.conf.scheduler.conf.warmup_steps=30000",
                 "++module.conf.net.conf.encoder.conf.from_pretrained_num_hidden_layers=3",
+            ],
+            "env": {
+                "PYTHONPATH": "../..:${PYTHONPATH}",
+                "OC_CAUSE": "1",
+                "HYDRA_FULL_ERROR": "1",
+                "MASTER_PORT": "6908",
+            }
+        },
+        {
+            "name": "wav2vec2 eval",
+            "type": "python",
+            "request": "launch",
+            "program": "AMINO/bin/eval.py",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "args": [
+                "--config-name", "HF_enc_classifier.yaml",
+                "hydra.run.dir=.:", "hydra.output_subdir=null",
+                "hydra/job_logging=disabled", "hydra/hydra_logging=disabled",
+                "++expbase.checkpoint='exp/HF_Num_layer12_Train1.0_Val1.0/11-07-39--2022-03-10/default_AMINO/0_135fnl8t/checkpoints/epoch=9-step=236549.ckpt'",
+                "++variables.dataloaders_num_workers=5",
+                "++variables.batch_size=10",
+                "++trainer.gpus='1'",
+                "++trainer.limit_train_batches=10",
+                "++trainer.limit_val_batches=10",
+                "++module.conf.scheduler.conf.warmup_steps=30000",
+                "++module.conf.net.conf.encoder.conf.from_pretrained_num_hidden_layers=12",
             ],
             "env": {
                 "PYTHONPATH": "../..:${PYTHONPATH}",

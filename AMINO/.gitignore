@@ -1,4 +1,4 @@
-bin/*.pyc
+bin/__pycache__/*.pyc
 datamodule/__pycache__/*.pyc
 modules/__pycache__/*.pyc
 modules/nets/__pycache__/*.pyc
@@ -6,4 +6,3 @@ modules/nets/transformer/__pycache__/*.pyc
 tools/__pycache__/*.pyc
 utils/__pycache__/*.pyc
 configs/__pycache__/*.pyc
-configs/*.py

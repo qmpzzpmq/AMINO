@@ -55,14 +55,6 @@ def common_prepare(cfg):
         logging.info(f"seed all seed to {seed}")
         pl.utilities.seed.seed_everything(seed)
     datamodule.set_replace_sampler_ddp(cfg.trainer.replace_sampler_ddp)
-
-    # save config and start train
-    hydra_config = hydra.core.hydra_config.HydraConfig.get()
-    OmegaConf.save(config=cfg, f=f'{hydra_config.job.name}.yaml')
-    logging.info(f'Config: {OmegaConf.to_yaml(cfg)}')
-    logging.warning(
-        f"start {hydra_config.job.name} job at dir {os.getcwd()}",
-    )
     return trainer, module, datamodule
 
 @hydra.main(
@@ -70,6 +62,13 @@ def common_prepare(cfg):
 )
 def main(cfg) -> None:
     trainer, module, datamodule = common_prepare(cfg)
+    # save config and start train
+    hydra_config = hydra.core.hydra_config.HydraConfig.get()
+    OmegaConf.save(config=cfg, f=f'{hydra_config.job.name}.yaml')
+    logging.info(f'Config: {OmegaConf.to_yaml(cfg)}')
+    logging.warning(
+        f"start {hydra_config.job.name} job at dir {os.getcwd()}",
+    )
     trainer.fit(
         module, datamodule=datamodule,
         ckpt_path=OmegaConf.select(cfg, "expbase.checkpoint")
