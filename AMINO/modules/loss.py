@@ -67,9 +67,10 @@ class LABEL_SMOOTHING_LOSS(nn.Module):
         assert x.size(-1) == self.size
         assert target.size(-1) == self.size
         target = target.to(dtype=torch.float)
-        mask = (target == 0.0)
-        target = target.masked_fill(mask, self.smoothing)
-        target = target.masked_fill(~mask, self.confidence)
+        if self.training:
+            mask = (target == 0.0)
+            target = target.masked_fill(mask, self.smoothing)
+            target = target.masked_fill(~mask, self.confidence)
         kl = self.criterion(torch.log_softmax(x, dim=1), target)
         return self.reduction(kl)
 
