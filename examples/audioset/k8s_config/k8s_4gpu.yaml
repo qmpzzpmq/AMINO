@@ -1,7 +1,7 @@
 apiVersion: "kubeflow.org/v1"
 kind: "PyTorchJob"
 metadata:
-  name: "charlie-pynn-amino-9layers"
+  name: "charlie-pynn-amino-3layers-ls2"
   namespace: "team"
  
 spec:

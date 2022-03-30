@@ -1,0 +1,247 @@
+variables:
+  # audioset_path: "/audioset_Kong"
+  audioset_path: "/share2/users/charlie/audioset/audioset_Kong"
+  batch_size: 1
+  dataloaders_num_workers: 0
+  # token_nj: "flexible"
+  token_nj: 16
+
+# it is necessary in module
+pipeline_size:
+  num_classes: ???
+
+defaults:
+  - override hydra/job_logging: AMINO_default
+  - override hydra/output: AMINO_default
+
+datamodule:
+  datasets:
+    train:
+      - select: "AMINO.datamodule.datasets:AUDIOSET_DATASET"
+        conf:
+          data_dir: ${variables.audioset_path}
+          # dataset: "balanced_train"
+          dataset: "unbalanced_train"
+          dump_path: "data/unbalanced_train.scp"
+          token_nj: ${variables.token_nj}
+      - select: "AMINO.datamodule.datasets:AUDIOSET_DATASET"
+        conf:
+          data_dir: ${variables.audioset_path}
+          dataset: "balanced_train"
+          dump_path: "data/balanced_train.scp"
+          token_nj: ${variables.token_nj}
+    val:
+      - select: "AMINO.datamodule.datasets:AUDIOSET_DATASET"
+        conf:
+          data_dir: ${variables.audioset_path}
+          dataset: "eval"
+          dump_path: "data/eval.scp"
+          speed_perturb: null
+    test: 
+      -  null
+  transform:
+    item:
+      train: null
+      val: null
+      test: null
+    batch_after:
+      train: null
+      val: null
+      test: null
+    batch_before:
+      train: null
+      val: null
+      test: null
+  after_transform:
+    train: null
+    val: null
+    test: null
+  dataloaders:
+    train:
+      batch_size: ${variables.batch_size}
+      num_workers: ${variables.dataloaders_num_workers}
+      shuffle: True
+      drop_last: true
+    val:
+      batch_size: ${variables.batch_size}
+      num_workers: ${variables.dataloaders_num_workers}
+      shuffle: False
+      drop_last: true
+  collect_fns:
+    train:
+      pad_choices: ['pad', 'onehot']
+    val:
+      pad_choices: ['pad', 'onehot']
+    test:
+      pad_choices: ['pad', 'onehot']
+
+module:
+  select: "AMINO.modules.enc_decs:AMINO_ENC_DECS"
+  conf:
+    net:
+      select: "AMINO.modules.nets.enc_decs:AMINO_ENC_DECS"
+      conf:
+        encoder:
+          select: "AMINO.modules.nets.encoder:HUGGINGFACE_WAV2VEC2"
+          conf:
+            config: null
+            from_pretrained: "facebook/wav2vec2-base-960h"
+            from_pretrained_num_hidden_layers: 3
+        decoders:
+          classifier:
+            select: "AMINO.modules.nets.decoder:AMINO_GP_DECODER"
+            conf:
+              buncher:
+                select: "AMINO.modules.nets.buncher:SIMPLE_LINEAR_BUNCHER"
+                conf:
+                  hidden_dims: [768]
+                  num_classes: ${pipeline_size.num_classes}
+              pooler:
+                select: "AMINO.modules.nets.pooler:SIMPLE_POOLER"
+                conf:
+                  pooling_method: "mean"
+          # autoencoder:
+          #   select: “SIMPLE_LINEAR_AUTOENCODER_DECODER”
+          #   conf:
+          #       attention_probs_dropout_prob: 0.1,
+          #       classifier_dropout: null,
+          #       hidden_act: "gelu",
+          #       hidden_dropout_prob: 0.1,
+          #       hidden_size": 768,
+          #       initializer_range: 0.02,
+          #       intermediate_size: 3072,
+          #       layer_norm_eps: 1e-12,
+          #       max_position_embeddings: 512,
+          #       model_type: "bert",
+          #       num_attention_heads: 12,
+          #       num_hidden_layers: 12,
+          #       pad_token_id: 0,
+          #       position_embedding_type: "absolute",
+          #       type_vocab_size: 2,
+          #       use_cache: true,
+          #       vocab_size: 30522
+    optim:
+      select: "torch.optim:Adam"
+      conf:
+        lr: 0.01
+    scheduler:
+      select: "AMINO.modules.scheduler:WarmupLR"
+      conf:
+        warmup_steps: 2000
+    losses:
+      nets:
+        classifier:
+          select: "AMINO.modules.loss:LABEL_SMOOTHING_LOSS"
+          conf:
+            size: ${pipeline_size.num_classes}
+            smoothing: 0.0
+      weights:
+        classifier: 1.0
+    metrics:
+      classifier:
+        acc:
+          select: "torchmetrics:Accuracy"
+          conf: {}
+        mAP:
+          select: "torchmetrics:AveragePrecision"
+          conf:
+            num_classes: ${pipeline_size.num_classes}
+        AUC:
+          select: "torchmetrics:AUROC"
+          conf:
+            num_classes: ${pipeline_size.num_classes}
+
+callbacks:
+- select: pytorch_lightning.callbacks.progress.tqdm_progress:TQDMProgressBar
+  conf:
+    refresh_rate: 1
+    process_position: 0
+- select: pytorch_lightning.callbacks.model_checkpoint:ModelCheckpoint
+  conf:
+    filename: epoch{epoch}-val_loss_total_epoch{val_loss_total_epoch:.3f}
+    monitor: val_loss_total_epoch
+    save_last: true
+    save_top_k: 5
+    dirpath: checkpoint
+- select: pytorch_lightning.callbacks.early_stopping:EarlyStopping
+  conf:
+    monitor: val_loss_total_epoch
+    mode: min
+    min_delta: 1.0e-03
+    patience: 5
+- select: pytorch_lightning.callbacks:DeviceStatsMonitor
+  conf: {}
+- select: pytorch_lightning.callbacks.lr_monitor:LearningRateMonitor
+  conf:
+    logging_interval: epoch
+- select: pytorch_lightning.callbacks:ModelSummary
+  conf:
+    max_depth: 3
+
+trainer:
+  accelerator: null
+  accumulate_grad_batches: null
+  amp_backend: native
+  amp_level: null
+  auto_lr_find: false
+  auto_scale_batch_size: false
+  auto_select_gpus: false
+  benchmark: false
+  enable_checkpointing: true
+  check_val_every_n_epoch: 1
+  default_root_dir: null
+  detect_anomaly: false
+  deterministic: false
+  devices: null
+  fast_dev_run: false
+  gpus: null
+  gradient_clip_val: null
+  gradient_clip_algorithm: null
+  limit_train_batches: 1.0
+  limit_val_batches: 1.0
+  limit_test_batches: 1.0
+  limit_predict_batches: 1.0
+  log_every_n_steps: 10
+  enable_progress_bar: true
+  profiler: null
+  overfit_batches: 0.0
+  precision: 32
+  max_epochs: null
+  min_epochs: null
+  max_steps: -1
+  min_steps: null
+  max_time: null
+  num_nodes: 1
+  num_processes: 1
+  num_sanity_val_steps: 2
+  reload_dataloaders_every_n_epochs: 0
+  replace_sampler_ddp: true
+  strategy: "ddp"
+  sync_batchnorm: false
+  terminate_on_nan: null
+  tpu_cores: null
+  ipus: null
+  track_grad_norm: -1
+  val_check_interval: 1.0
+  weights_save_path: null
+  move_metrics_to_cpu: false
+  multiple_trainloader_mode: max_size_cycle
+
+loggers:
+- select: pytorch_lightning.loggers:TensorBoardLogger
+  conf:
+    save_dir: ${expbase.tensorboard}/${hydra:job.name}
+- select: pytorch_lightning.loggers.wandb:WandbLogger
+  conf:
+    name: ${hydra:job.name}
+    save_dir: null
+    project: AMINO
+    log_model: false
+
+expbase:
+  exp: exp
+  tensorboard: tensorboard
+  wandb: wandb
+  neptune: neptune
+  seed: 777
+  checkpoint: null

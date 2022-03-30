@@ -117,6 +117,31 @@ class SpecAug(TrainDataAugment):
         batch['feature']['data'] = feature
         return batch
 
+class WITHINBATCH_MIXUP(TrainDataAugment):
+    def __init__(self, mixup_prob=0.2, mixup_alpha=0.2):
+        super().__init__()
+        assert mixup_prob >= 0 and mixup_prob <= 1.0, \
+            f"mixup_prob should be in [0,1], now is {mixup_prob}"
+        self.mixup_prob = mixup_prob
+        self.mixup_D = torch.distributions.beta.Beta(
+            mixup_alpha, mixup_alpha,
+        )
+    def forward(self, batch):
+        feature = batch['feature']['data']
+        batch_size = feature.size(0)
+        batch_threshold = self.mixup_prob * batch_size
+        if batch_threshold > 1:
+            mixup_size = batch_threshold.floor()
+            extract_idx = torch.randint(0, batch_size, [mixup_size * 2]).to(
+                device=feature.device,
+            )
+            extract_feature = feature.index_select(0, extract_idx)
+            mixup_feature = self.mixup(extract_feature, self.mixup_D.sample())
+        batch['feature']['data'] = feature
+
+    def mixup(self, feature, mixup_lambda):
+        pass
+
 def init_preporcesses(preprocesses_conf):
     if preprocesses_conf is not None:
         preprocesses = []

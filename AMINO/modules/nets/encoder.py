@@ -20,6 +20,7 @@ from AMINO.modules.nets.transformer.attention import MultiHeadedAttention
 from AMINO.modules.nets.transformer.encoder_layer import TransformerEncoderLayer
 from AMINO.modules.nets.transformer.positionwise_feed_forward import PositionwiseFeedForward
 from AMINO.modules.nets.cmvn import GlobalCMVN
+from AMINO.modules.nets.drop_layer import Wav2Vec2EncoderLayer_DropLayer_Warraper
 from AMINO.utils.mask import make_pad_mask
 from AMINO.utils.hdf5_load import bn2d_load, conv2d_load
 
@@ -174,6 +175,7 @@ class HUGGINGFACE_WAV2VEC2(nn.Module):
         },
         from_pretrained="facebook/wav2vec2-base", # "facebook/wav2vec2-base-960h",
         from_pretrained_num_hidden_layers=3,
+        drop_layer_p=0.0,
         quantizerVQ_topping=False,
     ):
         assert (config is not None) or (from_pretrained is not None), \
@@ -219,6 +221,12 @@ class HUGGINGFACE_WAV2VEC2(nn.Module):
                 pretrain_model.encoder.layers = pretrain_model.encoder.layers[:num_hidden_layers]
         elif pretrain_model is None and config is not None:
             model = model_class(config)
+
+        if drop_layer_p > 0.0:
+            model.encoder.layers = nn.ModuleList([
+                Wav2Vec2EncoderLayer_DropLayer_Warraper(drop_layer_p, x) \
+                for x in model.encoder.layers
+            ])
 
         # model.train()
         self.net = model
