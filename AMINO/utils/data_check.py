@@ -19,7 +19,9 @@ def tensor_inf_check(data):
     return bool(result.bool())
 
 def single_data_check(data, data_len, dim=-2):
-    data = torch.index_select(data, dim, torch.range(0, data_len))
+    data = torch.index_select(data, dim, torch.range(
+        0, data_len, dtype=torch.int32)
+    )
     return tensor_nan_check(data) and tensor_inf_check(data)
 
 def multiple_data_check(datas, datas_len, dim=-2):
@@ -29,6 +31,7 @@ def multiple_data_check(datas, datas_len, dim=-2):
     return bool(torch.logical_and(torch.tensor(results)).bool())
 
 def total_check(batch, dim=-2):
+    # dim: batch dim
     logging.warning(f"DATA SHARP DEBUG:")
     logging.warning(f"data: {batch['feature']['data'].shape}")
     logging.warning(f"label: {batch['label']['data'].shape}")

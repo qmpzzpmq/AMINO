@@ -361,11 +361,11 @@ class ADMOS_DATASET(AMINO_DATASET):
             )
         else:
             raise NotImplementedError(f"{format} not support")
-        files = normal_files + anormal_files
+        files = anormal_files + normal_files
         self.data_list = []
-        num_normal = len(normal_files)
+        num_anormal = len(anormal_files)
         for i, file in enumerate(files):
-            self.data_list.append({"file": file, "token": (i < num_normal)})
+            self.data_list.append({"file": file, "token": (i > num_anormal)})
 
     def __len__(self):
         return len(self.data_list)
@@ -377,6 +377,9 @@ class ADMOS_DATASET(AMINO_DATASET):
             return None
         label = torch.tensor([item["token"]])
         return data, label
+
+    def get_num_classes(self):
+        return False
 
 class AUDIOSET_DATASET(AMINO_DATASET):
     def __init__(

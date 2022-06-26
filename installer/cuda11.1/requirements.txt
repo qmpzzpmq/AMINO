@@ -1,0 +1,19 @@
+torch==1.9.1+cu111
+torchvision==0.10.1+cu111
+torchaudio==0.9.1
+# torch
+# torchvision
+# torchaudio
+pytorch-lightning
+hydra-core
+wandb
+pysoundfile
+librosa
+torchmetrics
+h5py
+undictify
+transformers==4.16
+setuptools==59.5.0
+datasets
+typeguard
+tfrecord

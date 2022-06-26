@@ -16,7 +16,7 @@ def ADMOS_seperation(batch, seperation_dim=0):
     feature_len = batch['feature']['len']
     label = batch['label']['data']
     out_dict = dict()
-    for key, flag in zip(["normal", "anomaly"], [True, False]):
+    for key, flag in zip(["anormal", "normal"], [False, True]):
         idx = (label==flag).nonzero(as_tuple=True)[0]
         if idx.size(0) > 0:
             temp_feature = torch.index_select(
@@ -41,7 +41,7 @@ class AMINO_MODULE(pl.LightningModule):
         super().__init__()
         self.net = init_object(net)
         if losses:
-            self.losses = AMINO_LOSSES(**losses)
+            self.losses = init_object(losses)
         if optim:
             self.optim = init_optim(self.net, optim)
             if scheduler:

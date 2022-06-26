@@ -12,12 +12,11 @@
             "console": "integratedTerminal",
             "justMyCode": true,
             "args": [
-                "--config-name", "melspectro_feature_combine.yaml",
+                "--config-name", "AEGMM.yaml",
                 "hydra.job.name=test",
                 "++variables.dataloaders_num_workers=0",
-                "++variables.batch_size=5",
+                "++variables.batch_size=20",
                 "++trainer.profiler='simple'",
-                // "++trainer.gpus=[0]",
                 // "++trainer.gpus=0",
                 // "++callbacks.gpu_stats=false",
                 // "hydra/job_logging=disabled",
@@ -28,7 +27,8 @@
             "env": {
                 "PYTHONPATH": "../..:${PYTHONPATH}",
                 "OC_CAUSE": "1",
-                "HYDRA_FULL_ERROR": "1"
+                "HYDRA_FULL_ERROR": "1",
+                "HOST_NODE_ADDR": "69081",
             }
         },
         {

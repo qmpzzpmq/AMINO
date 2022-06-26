@@ -27,14 +27,6 @@ def singlepadcollate(batch, dim=-1):
     data_len = torch.tensor(each_data_len)
     return data, data_len
 
-class Pad_tensor(object):
-    def __init__(self, pad, dim):
-        self.pad = pad
-        self.dim = dim
-
-    def __call__(self, vec):
-        return pad_tensor(vec, self.pad, self.dim)
-
 class SinglePadCollate(object):
     def __init__(self, dim=0):
         self.dim = dim
@@ -45,6 +37,8 @@ class SinglePadCollate(object):
 class MulPadCollate(object):
     def __init__(self, pad_choices, dim=-1):
         self.dim = dim
+        for pad_choice in pad_choices:
+            assert pad_choice in ["pad", "unpad"]
         self.pad_choices = pad_choices
 
     def __call__(self, batch):
@@ -67,18 +61,12 @@ class MulPadCollate(object):
                 datas_len.append(
                     torch.tensor([x.shape[self.dim] for x in each_data])
                 )
-            elif pad_choice == "onehot":
-                datas.append(torch.stack(each_data))
-                datas_len.append(
-                    torch.ones(len(each_data), dtype=torch.int)
-                )
-            else:
-                raise ValueError(f"{pad_choice} is not implement")
         return datas, datas_len
 
 class AMINOPadCollate(MulPadCollate):
     def __init__(self, pad_choices=["pad", "unpad"]):
         super().__init__(pad_choices, dim=-1)
+
     def __call__(self, batch):
         if ( outs := MulPadCollate.__call__(self, batch) ) is None:
             return None
@@ -89,11 +77,11 @@ class AMINOPadCollate(MulPadCollate):
         }
 
 def get_auto_batch_size(module, datamodule, trainer):
-        datamodule.batch_size = datamodule.datamodule_conf[
-            'dataloaders']['train']['batch_size']
-        result = trainer.tune(
-            module,
-            datamodule=datamodule,
-        )
-        del datamodule.batch_size
-        return result["scale_batch_size"]
+    datamodule.batch_size = datamodule.datamodule_conf[
+        'dataloaders']['train']['batch_size']
+    result = trainer.tune(
+        module,
+        datamodule=datamodule,
+    )
+    del datamodule.batch_size
+    return result["scale_batch_size"]

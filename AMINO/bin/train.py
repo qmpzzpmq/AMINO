@@ -9,21 +9,19 @@ import pytorch_lightning as pl
 from AMINO.utils.resolvers import register_OmegaConf_resolvers
 from AMINO.datamodule.datamodule import AMINODataModule
 from AMINO.utils.init_object import init_object, init_list_object
-from AMINO.utils.configs import cfg_process, is_classifier
+from AMINO.utils.configs import cfg_process
 from AMINO.utils.datamodule import get_auto_batch_size
 
 def common_prepare(cfg):
     # data prepare
     datamodule = AMINODataModule(cfg['datamodule'])
-    # if issubclass(dynamic_import(cfg['module']['select']), AMINO_CLASSIFIER):
-    if is_classifier(cfg["module"]["conf"]["net"]):
-        num_classes = datamodule.get_num_classes()
-        assert type(num_classes) == int
+    num_classes = datamodule.get_num_classes()
+    if num_classes :
         if "num_classes" in cfg['pipeline_size'] and \
                 type(cfg['pipeline_size']['num_classes']) == int:
             assert num_classes == cfg['module_flexible_size']['num_classes'], \
-                f"the num_classes {num_classes} in dataset not equals \
-                    num_classes {cfg['pipeline_size']['num_classes']} in configs"
+                f"the {num_classes=} in dataset not equals \
+                    num_classes {cfg['pipeline_size']['num_classes']=} in configs"
         else:
             cfg['pipeline_size']['num_classes'] = num_classes
         logging.info(f"num_classes: {num_classes}")

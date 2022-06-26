@@ -1,3 +1,5 @@
+import numpy as np
+
 import torch.nn as nn
 
 from AMINO.utils.init_object import init_object
@@ -27,6 +29,16 @@ class AMINO_ENC_DECS(nn.Module):
             ys_dict[key] = ys
             ys_len_dict[key] = ys_len
         return zs, zs_len, ys_dict, ys_len_dict
+    
+    def get_num_classes(self):
+        num_classes_list = list()
+        for decoder in self.decoders:
+            num_classes_list.append(decoder.get_num_class())
+        num_classes = np.array([x for x in num_classes_list if not x])
+        assert num_classes.max() == num_classes.min(), \
+            f"num_classes shoule be same"
+        return num_classes[0]
+
 
 class AMINO_WAC2VEC_ENC_DECS(AMINO_ENC_DECS):
     def forward(self, xs, xs_len):
