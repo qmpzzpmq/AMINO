@@ -64,4 +64,11 @@ class AMINO_AUTOENCODER(ADMOS_MODULE):
                 prog_bar=True, logger=True
             )
             losses[f"val_{k}_loss"] = loss
+        if "val_normal_loss" in losses and "val_anormal_loss" in loss:
+            diff = losses["val_anormal_loss"] - losses["val_normal_loss"]
+            self.log(
+                f"val_diff_loss", diff,
+                on_step=True, on_epoch=True,
+                prog_bar=True, logger=True
+            )
         return losses
