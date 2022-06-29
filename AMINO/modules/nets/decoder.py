@@ -26,9 +26,6 @@ class AMINO_GP_DECODER(AMINO_CLASSIFIER):
         # ys: (B, C)
         return ys, ys_len
 
-    def get_num_classes(self):
-        return self.buncher.get_num_classes()
-
 class AMINO_AUTOENCODER_DECODER(nn.Module):
     def foo(self):
         pass
@@ -42,16 +39,14 @@ class SIMPLE_LINEAR_AUTOENCODER_DECODER(
         hidden_dims=[256],
         drop_out=0.2,
         act_fn={
-            "select": "torch.nn:Sigmoid",
+            "select": "torch.nn:ReLU",
             "conf": dict(),
         }
     ):
         super().__init__(feature_dim, hidden_dims, drop_out, act_fn)
 
-    # def get_num_classes(self):
-    #     raise ValidationError("please use AMINO.modules.nets.buncher.SIMPLE_LINEAR_BUNCHER")
-
 # borrow idea from MAE
+# not done yet
 class TRANSFORMER_ENCODER_AS_AUTTOENDER_DECODER(AMINO_AUTOENCODER_DECODER):
     def __init__(
         self, num_layers, d_model, nhead, dim_feedforward=2048, dropout=0.1, 

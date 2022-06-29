@@ -109,27 +109,3 @@ class conv_autoencoder(nn.Module):
         h = self.enc(x)
         y = self.dec(h)
         return y
-
-class test_conv(nn.Module):
-    def __init__(
-        self,
-        channels=[4],
-        dropout_p = 0.2,
-    ):
-        super().__init__()
-        channels = [1] + channels + [1]
-        num_layer = len(channels) - 1
-        layers = []
-        for i in range(num_layer):
-            layers.append(
-                nn.Conv2d(
-                    channels[i],
-                    channels[i+1],
-                    (3, 3), padding=(1,1),
-                )
-            )
-            layers.append(nn.Dropout(dropout_p))
-        self.net = nn.Sequential(*layers)
-    
-    def forward(self, x):
-        return self.net(x)

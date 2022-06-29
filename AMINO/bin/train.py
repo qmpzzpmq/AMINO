@@ -46,7 +46,9 @@ def common_prepare(cfg):
     if cfg.trainer.auto_scale_batch_size:
         datamodule.datamodule_conf.dataloaders.train['batch_size'] = \
             get_auto_batch_size(module, datamodule, trainer)
-    assert cfg.trainer.strategy.startswith("ddp")
+    if type(cfg.trainer.strategy)==str:
+        assert cfg.trainer.strategy != "dp", \
+            "strategy of pytorch lightning trainer only support ddp*, now is dp"
 
     if not OmegaConf.select(cfg, "expbase.seed"):
         seed = cfg["expbase"]["seed"]

@@ -1,11 +1,12 @@
 from AMINO.modules.base_module import ADMOS_MODULE
 
-class AMINO_AUTOENCODER(ADMOS_MODULE):
+# temp for ZHAOYI module
+class AUTOENCODER_GMM(ADMOS_MODULE):
     def batch2loss(self, feature, feature_len):
         # feature shoule be (batch, channel, time, feature)
-        pred = self.net(feature)
-        loss = self.loss(pred, feature).sum()
-        loss =  loss / feature_len.sum() / pred.size(-1)
+        _, feature_hat, z, gamma = self.net(feature)
+        loss = self.losses(feature, feature_hat, z, gamma).sum()
+        loss =  loss / feature_len.sum() / feature.size(-1)
         return loss
 
     def training_step(self, batch, batch_idx):
@@ -33,12 +34,12 @@ class AMINO_AUTOENCODER(ADMOS_MODULE):
             losses[f"val_{k}_loss"] = loss
         return losses
 
-class AMINO_AUTOENCODER(ADMOS_MODULE):
+class AMINO_AUTOENCODER_GMM(ADMOS_MODULE):
     def batch2loss(self, feature, feature_len):
         # feature shoule be (batch, channel, time, feature)
-        _, feature_hat, z, gamma = self.net(feature)
+        _, feature_hat, z, gamma = self.net(feature, feature_len)
         loss = self.losses(feature, feature_hat, z, gamma).sum()
-        loss =  loss / feature_len.sum() / feature_hat.size(-1)
+        loss =  loss / feature_len.sum() / feature.size(-1)
         return loss
 
     def training_step(self, batch, batch_idx):
@@ -64,7 +65,7 @@ class AMINO_AUTOENCODER(ADMOS_MODULE):
                 prog_bar=True, logger=True
             )
             losses[f"val_{k}_loss"] = loss
-        if "val_normal_loss" in losses and "val_anormal_loss" in loss:
+        if "val_normal_loss" in losses and "val_anormal_loss" in losses:
             diff = losses["val_anormal_loss"] - losses["val_normal_loss"]
             self.log(
                 f"val_diff_loss", diff,

@@ -15,6 +15,7 @@ pipeline_size:
     - 32
     - 8
   num_gmm: 4
+  estimator_hidden_dim: 128
 
 defaults:
   - override hydra/job_logging: AMINO_default
@@ -103,16 +104,30 @@ datamodule:
       pad_choices: ['pad', 'unpad']
 
 module:
-  # temp use
-  select: "AMINO.modules.autoencoder:AUTOENCODER_GMM"
+  select: "AMINO.modules.autoencoder:AMINO_AUTOENCODER_GMM"
   conf:
     net:
-      # temp use
-      select: "AMINO.modules.nets.autoencoder:AEGMM"
+      select: "AMINO.modules.nets.autoencoder:AMINO_AEGMM"
       conf:
-        num_gmm: ${pipeline_size.num_gmm}
-        feature_dim: '${product: ${pipeline_size.num_mels}, ${pipeline_size.feature_unfold}}'
-        hidden_dims: '${pipeline_size.hidden_dims}'
+        encoder:
+          select: "AMINO.modules.nets.encoder:SIMPLE_LINEAR_ENCODER"
+          conf:
+            feature_dim: '${product: ${pipeline_size.num_mels}, ${pipeline_size.feature_unfold}}'
+            hidden_dims: '${pipeline_size.hidden_dims}'
+            norm_layer: false
+        decoder:
+          select: "AMINO.modules.nets.decoder:SIMPLE_LINEAR_AUTOENCODER_DECODER"
+          conf:
+            feature_dim: '${product: ${pipeline_size.num_mels}, ${pipeline_size.feature_unfold}}'
+            hidden_dims: '${list_reversed: ${pipeline_size.hidden_dims}}'
+        estimator:
+          select: "AMINO.modules.nets.buncher:SIMPLE_LINEAR_BUNCHER"
+          conf:
+            num_classes: '${pipeline_size.num_gmm}'
+            hidden_dims: '${cat: ${plus: ${extract_last: ${pipeline_size.hidden_dims}}, 2}, ${pipeline_size.estimator_hidden_dim}, ${pipeline_size.num_gmm}}'
+            act:
+              select: "torch.nn:Tanh"
+              conf: {}
     losses:
       select: "AMINO.modules.loss:AEGMM_LOSS"
       conf:
