@@ -217,3 +217,12 @@ class AEGMM_LOSS(nn.Module):
         cov /= ( gamma_sum.unsqueeze(-1).unsqueeze(-1) + torch.finfo(torch.float32).eps)
 
         return phi, mu, cov
+
+class PYRO_Differentiable_Loss(nn.Module):
+    # http://pyro.ai/examples/custom_objectives.html#A-Lower-Level-Pattern
+    def __init__(self, pyro_infer):
+        super().__init__()
+        self.fn = init_object(pyro_infer).differentiable_loss
+    
+    def forward(self, model, guide, *args, **kwargs):
+        return self.fn(model, guide, *args, **kwargs)

@@ -10,9 +10,9 @@
             "request": "launch",
             "program": "AMINO/bin/train.py",
             "console": "integratedTerminal",
-            "justMyCode": true,
+            "justMyCode": false,
             "args": [
-                "--config-name", "AEGMM.yaml",
+                "--config-name", "pyro_VAE_GMM.yaml",
                 "hydra.job.name=test",
                 "++variables.dataloaders_num_workers=0",
                 "++variables.batch_size=20",

@@ -4,6 +4,7 @@ from collections import OrderedDict
 import torch
 import torch.nn as nn
 import pytorch_lightning as pl
+import pyro
 
 from AMINO.utils.init_object import init_object
 from AMINO.modules.optim import init_optim
@@ -153,3 +154,16 @@ class ADMOS_MODULE(AMINO_MODULE):
         )
         logging.warning(f"the average of diff is {diff.mean()}")
         del self.avg_features
+
+class PYRO_PL_MODULE(AMINO_MODULE):
+    def on_train_epoch_start(self):
+        pyro.clear_param_store()
+
+    def guide(self, *args, **kwargs):
+        NotImplemented()
+    
+    def model(self, *args, **kwargs):
+        NotImplemented()
+    
+class PYRO_PL_ADMOS_MODULE(PYRO_PL_MODULE, ADMOS_MODULE):
+    pass

@@ -335,3 +335,45 @@ class SIMPLE_LINEAR_ENCODER(nn.Module):
         features = self.feature_extractor(xs)
         hs = self.net(features)
         return features, xs_len, hs, xs_len
+
+class SIMPLE_LINEAR_VAR_ENCODER(SIMPLE_LINEAR_ENCODER):
+    def __init__(
+        self,
+        feature_dim=128,
+        hidden_dims=[128, 128, 128, 128, 8],
+        drop_out=0.2,
+        norm_layer="batch",
+        act={
+            "select": "torch.nn:ReLU",
+            "conf": {"inplace": True}, 
+        },
+        cmvn_path=None,
+        load_from_h5=None,
+    ):
+        super().__init__(
+            feature_dim=feature_dim,
+            hidden_dims=hidden_dims[:-1],
+            drop_out=drop_out,
+            norm_layer=norm_layer,
+            act=act,
+            cmvn_path=cmvn_path,
+            load_from_h5=load_from_h5,
+        )
+        self.fc_loc = nn.Linear(
+            hidden_dims[-2], hidden_dims[-1]
+        )
+        self.fc_scale = nn.Linear(
+            hidden_dims[-2], hidden_dims[-1]
+        )
+        self.latent_size = hidden_dims[-1]
+
+    def forward(self, xs, xs_len):
+        # x: (B, C, T, F)
+        features = self.feature_extractor(xs)
+        hs = self.net(features)
+        z_loc = self.fc_loc(hs)
+        z_scale = torch.exp(self.fc_scale(hs))
+        return features, xs_len, hs, xs_len, z_loc, xs_len, z_scale, xs_len
+    
+    def get_latent_size(self):
+        return self.latent_size

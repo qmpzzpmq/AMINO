@@ -104,13 +104,13 @@ datamodule:
       pad_choices: ['pad', 'unpad']
 
 module:
-  select: "AMINO.modules.autoencoder:AMINO_AUTOENCODER_GMM"
+  select: "AMINO.modules.autoencoder:PYRO_VAE_GMM"
   conf:
     net:
-      select: "AMINO.modules.nets.autoencoder:AMINO_AEGMM"
+      select: "AMINO.modules.nets.autoencoder:AMINO_VAEGMM"
       conf:
         encoder:
-          select: "AMINO.modules.nets.encoder:SIMPLE_LINEAR_ENCODER"
+          select: "AMINO.modules.nets.encoder:SIMPLE_LINEAR_VAR_ENCODER"
           conf:
             feature_dim: '${product: ${pipeline_size.num_mels}, ${pipeline_size.feature_unfold}}'
             hidden_dims: '${pipeline_size.hidden_dims}'
@@ -129,11 +129,11 @@ module:
               select: "torch.nn:Tanh"
               conf: {}
     losses:
-      select: "AMINO.modules.loss:AEGMM_LOSS"
+      select: "AMINO.modules.loss:PYRO_Differentiable_Loss"
       conf:
-        lambda_energy: 0.1
-        lambda_cov: 0.05
-        num_gmm: ${pipeline_size.num_gmm}
+        pyro_infer:
+          select: "pyro.infer:Trace_ELBO"
+          conf: {}
     optim:
       select: "torch.optim:Adam"
       conf:

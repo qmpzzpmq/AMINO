@@ -5,6 +5,7 @@ import hydra
 from omegaconf import OmegaConf
 
 import pytorch_lightning as pl
+import pyro
 
 from AMINO.utils.resolvers import register_OmegaConf_resolvers
 from AMINO.datamodule.datamodule import AMINODataModule
@@ -54,6 +55,7 @@ def common_prepare(cfg):
         seed = cfg["expbase"]["seed"]
         logging.info(f"seed all seed to {seed}")
         pl.utilities.seed.seed_everything(seed)
+        pyro.set_rng_seed(101)
     datamodule.set_replace_sampler_ddp(cfg.trainer.replace_sampler_ddp)
     return trainer, module, datamodule
 

@@ -51,5 +51,12 @@ class WarmupLR(_LRScheduler):
 
 def init_scheduler(optim, scheduler_conf):
     scheduler_class = dynamic_import(scheduler_conf['select'])
-    scheduler = scheduler_class(optim, **scheduler_conf['conf'])
+    if scheduler_conf.get("backend", "torch") == "torch":
+        scheduler = scheduler_class(optim, **scheduler_conf['conf'])
+    else:
+        scheduler = scheduler_class(
+        {
+            "optimizer": optim, **scheduler_conf['conf']
+        }
+    )
     return scheduler 

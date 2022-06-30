@@ -9,7 +9,7 @@ import torchaudio
 import torch.nn as nn
 import torch.nn.functional as F
 from AMINO.utils.init_object import init_object
-import pyro
+import pyro.distributions as dist
 
 from AMINO.utils.hdf5_load import bn2d_load, conv2d_load
 from AMINO.modules.nets.cmvn import GlobalCMVN
@@ -198,6 +198,22 @@ class AMINO_AEGMM(AMINO_BASE_NET):
 
     def forward(self, xs, xs_len):
         _, _, zs_c, _ = self.encoder(xs, xs_len)
+        xs_hat, _ = self.decoder(zs_c, xs_len)
+        recs_1, recs_2 = compute_reconstruction(xs, xs_hat)
+        zs = torch.cat([zs_c, recs_1.unsqueeze(-1), recs_2.unsqueeze(-1)], dim=-1)
+        gammas, _ = self.estimator(zs, xs_len)
+        return zs_c, xs_hat, zs, gammas
+
+class AMINO_VAEGMM(AMINO_BASE_NET):
+    def __init__(self, encoder, decoder, estimator):
+        super().__init__()
+        self.encoder = init_object(encoder)
+        self.decoder = init_object(decoder)
+        self.estimator = init_object(estimator)
+
+    def forward(self, xs, xs_len):
+        _, _, _, _, zs_loc, _, zs_scale, _ = self.encoder(xs, xs_len)
+        zs_c = dist.Normal(zs_loc, zs_scale).sample()
         xs_hat, _ = self.decoder(zs_c, xs_len)
         recs_1, recs_2 = compute_reconstruction(xs, xs_hat)
         zs = torch.cat([zs_c, recs_1.unsqueeze(-1), recs_2.unsqueeze(-1)], dim=-1)
